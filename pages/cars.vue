@@ -109,7 +109,7 @@ const cars = ref([
     location: 'Warsaw, Main Street 10',
     price: 420,
     fav: false,
-    image: 'https://images.unsplash.com/photo-1503736334956-4c8f8e92946d?auto=format&fit=crop&w=400&q=80',
+    image: 'https://smartcdn.gprod.postmedia.digital/driving/wp-content/uploads/2022/01/2022-Toyota-Corolla-Hybrid-7.jpg',
     description: 'Reliable and economical Toyota Corolla Hybrid, perfect for city and long trips. Spacious, comfortable, and equipped with modern safety features.'
   },
   {
@@ -123,7 +123,7 @@ const cars = ref([
     location: 'Warsaw, Liberty Ave 5',
     price: 650,
     fav: false,
-    image: 'https://images.unsplash.com/photo-1511918984145-48de785d4c4e?auto=format&fit=crop&w=400&q=80',
+    image: 'https://images.carexpert.com.au/resize/960/-/cms/v1/media/2023-02-bmw-320i-sedan-m-sport-hero-16x9-1.jpg',
     description: 'Sporty BMW 320i with automatic transmission, leather seats, and advanced navigation. Enjoy a premium driving experience.'
   },
   {
@@ -137,7 +137,7 @@ const cars = ref([
     location: 'Warsaw, Green Park 2',
     price: 590,
     fav: false,
-    image: 'https://images.unsplash.com/photo-1502877338535-766e1452684a?auto=format&fit=crop&w=400&q=80',
+    image: 'https://www.topgear.com/sites/default/files/2023/03/1-Mercedes-A-Class.jpg',
     description: 'Comfortable Mercedes A-Class, diesel engine, manual transmission. Great for families and business trips.'
   },
   {
@@ -151,7 +151,7 @@ const cars = ref([
     location: 'Warsaw, Electric Ave 7',
     price: 800,
     fav: false,
-    image: 'https://images.unsplash.com/photo-1461632830798-3adb3034e4c8?auto=format&fit=crop&w=400&q=80',
+    image: 'https://cdn.motor1.com/images/mgl/AebbV/s3/audi-a3-sportback-45-tfsi-e-2021.webp',
     description: 'Brand new Audi A3 Electric, zero emissions, high-tech interior, and smooth ride. The future of driving.'
   }
 ]);

@@ -1,42 +1,63 @@
 <script setup>
 import { ref } from 'vue';
+import { useRouter } from 'vue-router';
 
 let mobileNav = ref(false);
+const router = useRouter();
 
 let toggleMobileNav = () => {
   mobileNav.value = !mobileNav.value;
 };
+
+function goToAuth() {
+  router.push('/auth');
+}
 </script>
 
 <template>
   <nav class="navbar">
     <div class="navbar-container">
-      <div class="navbar-logo">
+      <div class="navbar-logo clean-logo">
         <a href="/" class="navbar-title">
-          <img src="https://img.icons8.com/ios-filled/50/1d4857/home.png" alt="Logo" class="navbar-logo-img" />
-          <span class="brand">REAL ESTATE COMPANY.</span>
+          <img src="https://img.icons8.com/ios-filled/32/1d4857/home.png" alt="Logo" class="navbar-logo-img" />
+          <span class="brand">RENTING COMPANY</span>
         </a>
       </div>
       <!-- Desktop Menu -->
       <ul class="navbar-links">
-        <li><a href="/estate" class="navbar-link active">Real estate</a></li>
-        <li><a href="#" class="navbar-link">Find Cars</a></li>
-        <li><a href="#" class="navbar-link">Developers</a></li>
-        <li><a href="#" class="navbar-link">Real estate agencies</a></li>
-        <li><a href="#" class="navbar-link">Other services</a></li>
+        <li>
+          <a href="/estate" class="navbar-link" :class="{ active: $route.path === '/estate' }">Real estate</a>
+        </li>
+        <li class="dropdown">
+          <a href="/cars" class="navbar-link" :class="{ active: $route.path.startsWith('/cars') }">Find Cars</a>
+          <ul class="dropdown-menu">
+            <li><a href="/cars?type=sedan" class="navbar-link">Sedan</a></li>
+            <li><a href="/cars?type=suv" class="navbar-link">SUV</a></li>
+            <li><a href="/cars?type=van" class="navbar-link">Van</a></li>
+          </ul>
+        </li>
+        <li>
+          <a href="/about" class="navbar-link" :class="{ active: $route.path === '/about' }">About us</a>
+        </li>
+        <li>
+          <a href="#" class="navbar-link" :class="{ active: $route.path === '/agencies' }">Real estate agencies</a>
+        </li>
+        <li>
+          <a href="#" class="navbar-link" :class="{ active: $route.path === '/services' }">Other services</a>
+        </li>
       </ul>
       <div class="navbar-actions">
         <button class="create-request-btn">Create your request</button>
         <select class="lang-select">
           <option>Eng</option>
-          <option>Pl</option>
+          <option>Mgl</option>
         </select>
         <button class="icon-btn" title="Favorites">
           <svg width="22" height="22" fill="none" stroke="#1d4857" stroke-width="2" viewBox="0 0 24 24">
             <path d="M12 21s-6.5-5.2-9-8.4C.7 10.1 1.6 7.2 4.1 6.2c1.6-.6 3.3.1 4.3 1.3C9.9 8.4 12 10.5 12 10.5s2.1-2.1 3.6-3c1-.8 2.7-1.5 4.3-1.3 2.5 1 3.4 3.9 1.1 6.4C18.5 15.8 12 21 12 21z"/>
           </svg>
         </button>
-        <button class="login-btn">Login</button>
+        <button @click="goToAuth()" class="login-btn">Login</button>
       </div>
       <!-- Mobile Menu Button -->
       <button @click="toggleMobileNav()" type="button" class="navbar-toggle">
@@ -53,19 +74,34 @@ let toggleMobileNav = () => {
         </svg>
       </button>
       <ul class="navbar-mobile-links">
-        <li><a @click="toggleMobileNav()" href="/estate" class="navbar-link active">Real estate</a></li>
-        <li><a @click="toggleMobileNav()" href="#" class="navbar-link">Find neighbors</a></li>
-        <li><a @click="toggleMobileNav()" href="#" class="navbar-link">Developers</a></li>
-        <li><a @click="toggleMobileNav()" href="#" class="navbar-link">Real estate agencies</a></li>
-        <li><a @click="toggleMobileNav()" href="#" class="navbar-link">Other services</a></li>
+        <li>
+          <a @click="toggleMobileNav()" href="/estate" class="navbar-link" :class="{ active: $route.path === '/estate' }">Real estate</a>
+        </li>
+        <li class="dropdown">
+          <a href="#" class="navbar-link" :class="{ active: $route.path.startsWith('/cars') }">Find Cars</a>
+          <ul class="dropdown-menu">
+            <li><a @click="toggleMobileNav()" href="/cars?type=sedan" class="navbar-link">Sedan</a></li>
+            <li><a @click="toggleMobileNav()" href="/cars?type=suv" class="navbar-link">SUV</a></li>
+            <li><a @click="toggleMobileNav()" href="/cars?type=van" class="navbar-link">Van</a></li>
+          </ul>
+        </li>
+        <li>
+          <a @click="toggleMobileNav()" href="/about" class="navbar-link" :class="{ active: $route.path === '/about' }">About us</a>
+        </li>
+        <li>
+          <a @click="toggleMobileNav()" href="#" class="navbar-link" :class="{ active: $route.path === '/agencies' }">Real estate agencies</a>
+        </li>
+        <li>
+          <a @click="toggleMobileNav()" href="#" class="navbar-link" :class="{ active: $route.path === '/services' }">Other services</a>
+        </li>
         <li><button class="create-request-btn mt-2">Create your request</button></li>
         <li>
           <select class="lang-select mt-2">
             <option>Eng</option>
-            <option>Pl</option>
+            <option>Mn</option>
           </select>
         </li>
-        <li><button class="login-btn mt-2">Login</button></li>
+        <li><button @click="goToAuth()" class="login-btn mt-2">Login</button></li>
       </ul>
     </div>
   </nav>
@@ -234,5 +270,79 @@ let toggleMobileNav = () => {
 @keyframes fadeIn {
   from { opacity: 0; transform: translateY(-16px);}
   to { opacity: 1; transform: translateY(0);}
+}
+.dropdown {
+  position: relative;
+}
+.dropdown-menu {
+  display: none;
+  position: absolute;
+  left: 0;
+  top: 100%;
+  background: #fff;
+  box-shadow: 0 2px 8px rgba(29, 72, 87, 0.08);
+  border-radius: 8px;
+  min-width: 140px;
+  z-index: 10;
+  padding: 0.5rem 0;
+}
+.dropdown:hover .dropdown-menu,
+.dropdown:focus-within .dropdown-menu {
+  display: block;
+}
+.dropdown-menu li {
+  padding: 0.5rem 1.2rem;
+}
+.dropdown-menu li a {
+  color: #1d4857;
+  text-decoration: none;
+  font-size: 1rem;
+  display: block;
+}
+.dropdown-menu li a:hover {
+  background: #f2f2f2;
+}
+@media (max-width: 1024px) {
+  .navbar-links,
+  .navbar-actions {
+    display: none;
+  }
+  .navbar-toggle {
+    display: block;
+  }
+  .navbar-mobile-links .dropdown-menu {
+    position: static;
+    box-shadow: none;
+    border-radius: 0;
+    min-width: 0;
+    padding: 0;
+    display: block;
+  }
+  .navbar-mobile-links .dropdown > .navbar-link {
+    font-weight: 500;
+    padding: 0.5rem 1.2rem;
+    border-bottom: 1px solid #e0e0e0;
+  }
+}
+.clean-logo {
+  display: flex;
+  align-items: center;
+  padding: 0;
+  margin: 0;
+}
+.clean-logo .navbar-title {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 1.3rem;
+  font-weight: 700;
+  color: #1d4857;
+  text-decoration: none;
+}
+.clean-logo .navbar-logo-img {
+  width: 32px;
+  height: 32px;
+  margin: 0;
+  padding: 0;
 }
 </style>
