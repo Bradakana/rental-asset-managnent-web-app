@@ -252,7 +252,7 @@ function toggleFav(car) {
   transition: max-width 0.3s;
 }
 .car-list.shrink {
-  max-width: 400px;
+  max-width: 50%;
 }
 .car-card {
   background: #fff;

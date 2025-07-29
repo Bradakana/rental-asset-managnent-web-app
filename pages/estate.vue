@@ -237,7 +237,7 @@ function toggleFav(estate) {
   transition: max-width 0.3s;
 }
 .estate-list.shrink {
-  max-width: 400px;
+  max-width: 50%;
 }
 .estate-card {
   background: #fff;
