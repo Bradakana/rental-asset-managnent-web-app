@@ -105,7 +105,7 @@ const estates = ref([
     allowed: true,
     price: 1242,
     fav: false,
-    image: 'https://images.unsplash.com/photo-1506744038136-46273834b3fb?auto=format&fit=crop&w=400&q=80',
+    image: 'https://www.digitalphotomentor.com/photography/2018/09/real-estate-photography-interior-photo-750x500.jpg',
     description: 'Well rent out cozy, warm 2-room apartment, 1/5 story building, #39/07, adjoining rooms, separate bathroom. The apartment has a fresh cosmetic renovation, double glazed windows everywhere, the balcony is glazed, sheathed. There are new tiles on the floor in the hallway, new tiles in the kitchen, parquet in the rooms. Utility meters for hot and cold water. Boiler 50L.'
   },
   {
@@ -117,7 +117,7 @@ const estates = ref([
     allowed: true,
     price: 2500,
     fav: false,
-    image: 'https://images.unsplash.com/photo-1464983953574-0892a716854b?auto=format&fit=crop&w=400&q=80',
+    image: 'https://www.digitalphotomentor.com/photography/2018/09/real-estate-living-room-photo-2.jpg',
     description: 'Spacious 4-room apartment with modern amenities, large windows, and a balcony. Perfect for families.'
   },
   {
@@ -129,7 +129,7 @@ const estates = ref([
     allowed: false,
     price: 920,
     fav: false,
-    image: 'https://images.unsplash.com/photo-1512918728675-ed5a9ecdebfd?auto=format&fit=crop&w=400&q=80',
+    image: 'https://plus.unsplash.com/premium_photo-1684348962314-64fa628992f0?fm=jpg&q=60&w=3000&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxzZWFyY2h8NXx8cmVhbCUyMGVzdGF0ZSUyMGludGVyaW9yfGVufDB8fDB8fHww',
     description: 'Bright and cozy apartment in a quiet neighborhood. Close to public transport and shops.'
   },
   {
@@ -141,7 +141,7 @@ const estates = ref([
     allowed: true,
     price: 1340,
     fav: false,
-    image: 'https://images.unsplash.com/photo-1522708323590-d24dbb6b0267?auto=format&fit=crop&w=400&q=80',
+    image: 'https://www.photoplan.co.uk/wp-content/uploads/2021/05/Interior_Photography_-_100-2-1.jpg',
     description: 'Modern studio apartment with all conveniences. Ideal for singles or couples.'
   }
 ]);
