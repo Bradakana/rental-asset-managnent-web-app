@@ -18,7 +18,7 @@ function goToAuth() {
   <nav class="navbar">
     <div class="navbar-container">
       <div class="navbar-logo clean-logo">
-        <a href="/" class="navbar-title">
+        <a href="/app" class="navbar-title">
           <img src="https://img.icons8.com/ios-filled/32/1d4857/home.png" alt="Logo" class="navbar-logo-img" />
           <span class="brand">RENTING COMPANY</span>
         </a>
@@ -60,9 +60,12 @@ function goToAuth() {
         <button @click="goToAuth()" class="login-btn">Login</button>
       </div>
       <!-- Mobile Menu Button -->
-      <button @click="toggleMobileNav()" type="button" class="navbar-toggle">
-        <svg viewBox="0 0 24 24" class="h-7 w-7 fill-current" style="color:#1d4857;">
-          <path fill-rule="evenodd" d="M4 5h16a1 1 0 0 1 0 2H4a1 1 0 1 1 0-2zm0 6h16a1 1 0 0 1 0 2H4a1 1 0 0 1 0-2zm0 6h16a1 1 0 0 1 0 2H4a1 1 0 0 1 0-2z"></path>
+      <button @click="toggleMobileNav()" type="button" class="navbar-toggle" aria-label="Toggle navigation">
+        <!-- 3 line hamburger icon -->
+        <svg width="32" height="32" viewBox="0 0 32 32" fill="none">
+          <rect y="7" width="32" height="3" rx="1.5" fill="#fff"/>
+          <rect y="14" width="32" height="3" rx="1.5" fill="#fff"/>
+          <rect y="21" width="32" height="3" rx="1.5" fill="#fff"/>
         </svg>
       </button>
     </div>
@@ -220,12 +223,16 @@ function goToAuth() {
   color: #fff;
 }
 .navbar-toggle {
-  background: none;
+  background: #1d4857;
   border: none;
   outline: none;
   cursor: pointer;
   padding: 0.5rem;
   display: none;
+  border-radius: 8px;
+}
+.navbar-toggle svg {
+  display: block;
 }
 @media (max-width: 1024px) {
   .navbar-links,
