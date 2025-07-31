@@ -4,21 +4,31 @@
       <!-- Left Section: Form -->
       <div class="auth-form-section">
         <h1 class="auth-title">Your Property & Vehicle Portal</h1>
-        <p class="auth-subtitle">Welcome back! Please login to your account.</p>
-        <form class="auth-form" @submit.prevent="handleLogin">
+        <p class="auth-subtitle">
+          <span v-if="isLogin">Welcome back! Please login to your account.</span>
+          <span v-else>Register a new account to get started.</span>
+        </p>
+        <form class="auth-form" @submit.prevent="isLogin ? handleLogin() : handleRegister()">
           <label class="auth-label" for="email">Email Address</label>
           <input class="auth-input" id="email" type="email" v-model="email" placeholder="Email Address" />
           <span v-if="errors.email" class="auth-error">{{ errors.email }}</span>
           <label class="auth-label" for="password">Password</label>
           <input class="auth-input" id="password" type="password" v-model="password" placeholder="Password" />
           <span v-if="errors.password" class="auth-error">{{ errors.password }}</span>
+          <div v-if="!isLogin" class="auth-extra">
+            <label class="auth-label" for="confirmPassword">Confirm Password</label>
+            <input class="auth-input" id="confirmPassword" type="password" v-model="confirmPassword" placeholder="Confirm Password" />
+            <span v-if="errors.confirmPassword" class="auth-error">{{ errors.confirmPassword }}</span>
+          </div>
           <div class="auth-options">
             <label><input type="checkbox" v-model="rememberMe" /> Remember Me</label>
-            <a href="#" class="auth-link">Forgot Password?</a>
+            <a href="#" class="auth-link" v-if="isLogin">Forgot Password?</a>
           </div>
           <div class="auth-btns">
-            <button type="submit" class="auth-btn primary">Login</button>
-            <button type="button" class="auth-btn outline">Sign Up</button>
+            <button type="submit" class="auth-btn primary">{{ isLogin ? 'Login' : 'Register' }}</button>
+            <button type="button" class="auth-btn outline" @click="toggleForm">
+              {{ isLogin ? 'Sign Up' : 'Login' }}
+            </button>
           </div>
           <div class="auth-social">
             Or login with
@@ -41,21 +51,28 @@ export default {
   name: "AuthPageSimple",
   data() {
     return {
+      isLogin: true,
       email: "",
       password: "",
+      confirmPassword: "",
       rememberMe: false,
       errors: {
         email: "",
-        password: ""
+        password: "",
+        confirmPassword: ""
       }
     };
   },
   methods: {
+    toggleForm() {
+      this.isLogin = !this.isLogin;
+      this.errors = { email: "", password: "", confirmPassword: "" };
+      this.password = "";
+      this.confirmPassword = "";
+    },
     validateEmail(email) {
-      // Must not be blank, must not contain '@gmail'
       if (!email.trim()) return "Email is required.";
       if (email.includes("@gmail")) return "Gmail addresses are not allowed.";
-      // Basic format check
       const re = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
       if (!re.test(email)) return "Invalid email format.";
       return "";
@@ -63,6 +80,11 @@ export default {
     validatePassword(password) {
       if (!password) return "Password is required.";
       if (password.length < 8) return "Password must be at least 8 characters.";
+      return "";
+    },
+    validateConfirmPassword(password, confirmPassword) {
+      if (!confirmPassword) return "Please confirm your password.";
+      if (password !== confirmPassword) return "Passwords do not match.";
       return "";
     },
     handleLogin() {
@@ -74,8 +96,18 @@ export default {
         } else {
           localStorage.removeItem("rememberedEmail");
         }
-        // Proceed with login logic...
         alert("Login successful!");
+      }
+    },
+    handleRegister() {
+      this.errors.email = this.validateEmail(this.email);
+      this.errors.password = this.validatePassword(this.password);
+      this.errors.confirmPassword = this.validateConfirmPassword(this.password, this.confirmPassword);
+      if (!this.errors.email && !this.errors.password && !this.errors.confirmPassword) {
+        alert("Registration successful!");
+        this.isLogin = true;
+        this.password = "";
+        this.confirmPassword = "";
       }
     }
   },
@@ -224,6 +256,13 @@ export default {
   width: 100%;
   height: auto;
   object-fit: contain;
+}
+.auth-error {
+  color: #d32f2f;
+  font-size: 0.97rem;
+  margin-bottom: 8px;
+  margin-top: -8px;
+  display: block;
 }
 @media (max-width: 900px) {
   .auth-container {
