@@ -2,18 +2,18 @@
   <div class="welcome-bg">
     <div class="welcome-content">
       <h1 class="welcome-title">
-        <span class="gradient-text">A Fast Blockchain.</span><br />
-        <span>Scalable AI.</span>
+        <span class="gradient-text">Find Your Perfect Ride.</span><br />
+        <span>Or Your Next Home.</span>
       </h1>
       <p class="welcome-desc">
-        Our technology performing fast blockchain (120K TPS) and it has guaranteed<br>
-        AI-based data security. Proof of Stake, its consensus algorithm enables unlimited speeds.
+        Explore high-quality cars and rental estates across Mongolia.<br />
+        Quick bookings, transparent pricing, and AI-matched recommendations — all in one place.
       </p>
       <div class="welcome-actions">
-        <button class="welcome-btn gradient-border" @click="goApp">Get started</button>
+        <button class="welcome-btn gradient-border" @click="goApp">Browse Rentals</button>
         <button class="welcome-btn outline" @click="goAuth">Login</button>
       </div>
-      <img class="welcome-img" src="https://assets-global.website-files.com/63f5e6b6b6b6b6b6b6b6b6b6/63f5e6b6b6b6b6b6b6b6b6b6_ai-illustration.png" alt="AI Illustration" />
+      <img class="welcome-img" src="https://wallpapersok.com/images/high/caption-elegant-modern-house-with-sleek-black-car-2azfsvmkxazttym2.jpg" alt="Estate & Car Illustration" />
     </div>
   </div>
 </template>
@@ -29,10 +29,11 @@ function goAuth() {
 }
 </script>
 
+
 <style scoped>
 .welcome-bg {
   min-height: 100vh;
-  background: #0a0a0a;
+  background: url("/src/picture/3.jpg") no-repeat center center/cover;
   display: flex;
   align-items: center;
   justify-content: center;
