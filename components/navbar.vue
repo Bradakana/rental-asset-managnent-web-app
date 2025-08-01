@@ -52,7 +52,7 @@ function goToAuth() {
           <option>Eng</option>
           <option>Mgl</option>
         </select>
-        <button class="icon-btn" title="Favorites">
+        <button class="icon-btn" title="Favorites" @click="router.push('/favourite')">
           <svg width="22" height="22" fill="none" stroke="#1d4857" stroke-width="2" viewBox="0 0 24 24">
             <path d="M12 21s-6.5-5.2-9-8.4C.7 10.1 1.6 7.2 4.1 6.2c1.6-.6 3.3.1 4.3 1.3C9.9 8.4 12 10.5 12 10.5s2.1-2.1 3.6-3c1-.8 2.7-1.5 4.3-1.3 2.5 1 3.4 3.9 1.1 6.4C18.5 15.8 12 21 12 21z"/>
           </svg>

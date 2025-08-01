@@ -189,6 +189,29 @@ function selectCar(car) {
 
 function toggleFav(car) {
   car.fav = !car.fav;
+
+  // Load current favourites from localStorage
+  let favs = JSON.parse(localStorage.getItem("favourites") || "[]");
+
+  if (car.fav) {
+    // Add to favourites if not already present
+    if (!favs.some(e => e.id === car.id && e.type === 'Car')) {
+      favs.push({
+        id: car.id,
+        title: `${car.brand} ${car.model}`,
+        location: car.location,
+        price: car.price,
+        image: car.image,
+        type: 'Car'
+      });
+    }
+  } else {
+    // Remove from favourites
+    favs = favs.filter(e => !(e.id === car.id && e.type === 'Car'));
+  }
+
+  // Save updated favourites
+  localStorage.setItem("favourites", JSON.stringify(favs));
 }
 </script>
 

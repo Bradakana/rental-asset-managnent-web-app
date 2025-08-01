@@ -175,6 +175,29 @@ function selectEstate(estate) {
 
 function toggleFav(estate) {
   estate.fav = !estate.fav;
+
+  // Load current favourites from localStorage
+  let favs = JSON.parse(localStorage.getItem("favourites") || "[]");
+
+  if (estate.fav) {
+    // Add to favourites if not already present
+    if (!favs.some(e => e.id === estate.id && e.type === 'Estate')) {
+      favs.push({
+        id: estate.id,
+        title: estate.title,
+        location: estate.location,
+        price: estate.price,
+        image: estate.image,
+        type: 'Estate'
+      });
+    }
+  } else {
+    // Remove from favourites
+    favs = favs.filter(e => !(e.id === estate.id && e.type === 'Estate'));
+  }
+
+  // Save updated favourites
+  localStorage.setItem("favourites", JSON.stringify(favs));
 }
 </script>
 
