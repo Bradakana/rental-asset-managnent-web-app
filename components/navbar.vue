@@ -40,7 +40,7 @@ function goToAuth() {
           <a href="/about" class="navbar-link" :class="{ active: $route.path === '/about' }">About us</a>
         </li>
         <li>
-          <a href="#" class="navbar-link" :class="{ active: $route.path === '/agencies' }">Real estate agencies</a>
+          <a href="/agencieswwww" class="navbar-link" :class="{ active: $route.path === '/agencies' }">Real estate agencies</a>
         </li>
         <li>
           <a href="#" class="navbar-link" :class="{ active: $route.path === '/services' }">Other services</a>
