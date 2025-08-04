@@ -1,0 +1,9 @@
+{
+  "hello": "Hello",
+  "login": "Login",
+  "logout": "Logout",
+  "profile": "Profile",
+  "asset": "Asset",
+  "save": "Save",
+  "cancel": "Cancel"
+}
