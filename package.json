@@ -10,10 +10,12 @@
     "postinstall": "nuxt prepare"
   },
   "dependencies": {
+    "expo": "^53.0.20",
     "mdb-vue-ui-kit": "^6.0.0",
     "navbar": "^3.0.0",
     "nuxt": "^4.0.1",
     "vue": "^3.5.17",
-    "vue-router": "^4.5.1"
+    "vue-router": "^4.5.1",
+    "expo-dev-client": "~5.2.4"
   }
 }
