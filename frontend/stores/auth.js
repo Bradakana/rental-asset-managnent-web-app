@@ -71,6 +71,41 @@ export const useAuthStore = defineStore('auth', {
       }
     },
 
+    async registerUser(userData) {
+      this.loading = true
+      try {
+        console.log('Registering user:', userData)
+        const response = await fetch('http://localhost:3001/api/auth/register-user', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(userData)
+        })
+        console.log('Response status:', response.status)
+        const data = await response.json()
+        console.log('Response data:', data)
+        
+        if (!response.ok) {
+          console.error('Registration failed:', data.error)
+          throw new Error(data.error || 'Registration failed')
+        }
+        
+        this.user = data.user
+        this.token = data.token
+        this.isAuthenticated = true
+        if (process.client) {
+          localStorage.setItem('token', data.token)
+          localStorage.setItem('user', JSON.stringify(data.user))
+        }
+        console.log('Registration successful')
+        return { success: true }
+      } catch (error) {
+        console.error('Registration error in store:', error)
+        return { success: false, error: error.message }
+      } finally {
+        this.loading = false
+      }
+    },
+
     async logout() {
       this.user = null
       this.token = null

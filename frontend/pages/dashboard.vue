@@ -43,9 +43,9 @@
       <v-col cols="12" sm="6" md="3">
         <v-card class="stat-card" elevation="2">
           <v-card-text class="text-center">
-            <v-icon size="48" color="info" class="mb-2">mdi-currency-usd</v-icon>
-            <div class="text-h4 font-weight-bold">${{ stats.monthlyRevenue.toLocaleString() }}</div>
-            <div class="text-subtitle-2 text-medium-emphasis">Monthly Revenue</div>
+            <v-icon size="48" color="info" class="mb-2">mdi-bell</v-icon>
+            <div class="text-h4 font-weight-bold">{{ stats.totalSubscriptions }}</div>
+            <div class="text-subtitle-2 text-medium-emphasis">Active Subscriptions</div>
           </v-card-text>
         </v-card>
       </v-col>
@@ -181,11 +181,72 @@
           </v-card-text>
         </v-card>
         
+        <!-- Subscription Notifications -->
+        <v-card class="mt-4" elevation="2">
+          <v-card-title class="d-flex align-center justify-space-between">
+            <div class="d-flex align-center">
+              <v-icon class="mr-2" color="primary">mdi-bell</v-icon>
+              Subscription Notifications
+              <v-chip 
+                v-if="notifications.length > 0" 
+                class="ml-2" 
+                color="primary" 
+                size="small"
+              >
+                {{ unreadNotifications }}
+              </v-chip>
+            </div>
+            <v-btn
+              variant="text"
+              size="small"
+              @click="markAllAsRead"
+              v-if="unreadNotifications > 0"
+            >
+              Mark all read
+            </v-btn>
+          </v-card-title>
+          <v-card-text>
+            <v-list v-if="notifications.length > 0">
+              <v-list-item
+                v-for="notification in notifications.slice(0, 5)"
+                :key="notification._id"
+                :class="{ 'notification-unread': !notification.isRead }"
+                @click="markAsRead(notification._id)"
+              >
+                <template v-slot:prepend>
+                  <v-icon :color="getNotificationIcon(notification.type).color">
+                    {{ getNotificationIcon(notification.type).icon }}
+                  </v-icon>
+                </template>
+                <v-list-item-title>{{ notification.title }}</v-list-item-title>
+                <v-list-item-subtitle>
+                  {{ notification.message }}
+                  <div class="text-caption mt-1">
+                    {{ formatDate(notification.createdAt) }}
+                  </div>
+                </v-list-item-subtitle>
+                <template v-slot:append>
+                  <v-chip 
+                    v-if="!notification.isRead" 
+                    color="primary" 
+                    size="x-small"
+                  >
+                    New
+                  </v-chip>
+                </template>
+              </v-list-item>
+            </v-list>
+            <div v-else class="text-center text-medium-emphasis py-4">
+              No notifications yet
+            </div>
+          </v-card-text>
+        </v-card>
+        
         <!-- Alerts -->
         <v-card class="mt-4" elevation="2" color="warning-lighten-5">
           <v-card-title class="d-flex align-center">
             <v-icon class="mr-2" color="warning">mdi-alert</v-icon>
-            Alerts
+            System Alerts
           </v-card-title>
           <v-card-text>
             <v-list>
@@ -222,8 +283,13 @@ const stats = reactive({
   totalAssets: 24,
   availableAssets: 18,
   rentedAssets: 6,
-  monthlyRevenue: 15420
+  totalSubscriptions: 0
 })
+
+const notifications = ref([])
+const unreadNotifications = computed(() => 
+  notifications.value.filter(n => !n.isRead).length
+)
 
 const recentRentals = ref([
   {
@@ -298,6 +364,122 @@ const exportReport = () => {
   console.log('Exporting report...')
 }
 
+// Subscription notification functions
+const fetchNotifications = async () => {
+  try {
+    if (!authStore.isLoggedIn || !authStore.token) return
+
+    const response = await fetch('http://localhost:3001/api/subscriptions/vendor-notifications', {
+      headers: {
+        'Authorization': `Bearer ${authStore.token}`
+      }
+    })
+
+    if (response.ok) {
+      const data = await response.json()
+      notifications.value = data.data
+    }
+  } catch (error) {
+    console.error('Error fetching notifications:', error)
+  }
+}
+
+const fetchSubscriptionStats = async () => {
+  try {
+    if (!authStore.isLoggedIn || !authStore.token) return
+
+    const response = await fetch('http://localhost:3001/api/subscriptions/analytics', {
+      headers: {
+        'Authorization': `Bearer ${authStore.token}`
+      }
+    })
+
+    if (response.ok) {
+      const data = await response.json()
+      stats.totalSubscriptions = data.data.overview.activeSubscriptions
+    }
+  } catch (error) {
+    console.error('Error fetching subscription stats:', error)
+  }
+}
+
+const fetchRealRentals = async () => {
+  try {
+    if (!authStore.isLoggedIn || !authStore.token) return
+
+    const response = await fetch('http://localhost:3001/api/rentals', {
+      headers: {
+        'Authorization': `Bearer ${authStore.token}`
+      }
+    })
+
+    if (response.ok) {
+      const data = await response.json()
+      if (data.success && data.data && data.data.length > 0) {
+        // Update recent rentals with real data
+        recentRentals.value = data.data.slice(0, 5).map(rental => ({
+          id: rental._id,
+          assetName: rental.assetId?.name || rental.assetId?.model || rental.assetId?.title || 'Unknown Asset',
+          assetType: rental.assetId?.type || 'asset',
+          renterName: rental.renterId?.firstName ? `${rental.renterId.firstName} ${rental.renterId.lastName}` : 'Unknown Renter',
+          startDate: rental.startDate,
+          endDate: rental.endDate,
+          status: rental.status
+        }))
+
+        // Update stats with real data
+        const activeRentals = data.data.filter(r => r.status === 'active').length
+        const completedRentals = data.data.filter(r => r.status === 'completed').length
+        stats.rentedAssets = activeRentals
+        stats.availableAssets = stats.totalAssets - activeRentals
+      }
+    }
+  } catch (error) {
+    console.error('Error fetching real rentals:', error)
+  }
+}
+
+const markAsRead = async (notificationId) => {
+  try {
+    const response = await fetch(`http://localhost:3001/api/subscriptions/notifications/${notificationId}/read`, {
+      method: 'PATCH',
+      headers: {
+        'Authorization': `Bearer ${authStore.token}`
+      }
+    })
+
+    if (response.ok) {
+      const notification = notifications.value.find(n => n._id === notificationId)
+      if (notification) notification.isRead = true
+    }
+  } catch (error) {
+    console.error('Error marking notification as read:', error)
+  }
+}
+
+const markAllAsRead = async () => {
+  const unreadIds = notifications.value.filter(n => !n.isRead).map(n => n._id)
+  
+  for (const id of unreadIds) {
+    await markAsRead(id)
+  }
+}
+
+const getNotificationIcon = (type) => {
+  switch (type) {
+    case 'subscription_created':
+      return { icon: 'mdi-account-plus', color: 'success' }
+    case 'subscription_cancelled':
+      return { icon: 'mdi-account-minus', color: 'warning' }
+    case 'asset_available':
+      return { icon: 'mdi-check-circle', color: 'success' }
+    case 'price_changed':
+      return { icon: 'mdi-currency-usd', color: 'info' }
+    default:
+      return { icon: 'mdi-bell', color: 'primary' }
+  }
+}
+
 onMounted(async () => {
   // Load dashboard data
   await authStore.checkAuth()
@@ -311,6 +493,13 @@ onMounted(async () => {
   if (!authStore.canAccessAdminPages) {
     navigateTo('/pages-user')
     return
+  }
+
+  // Load subscription data for vendors
+  if (authStore.user?.vendorId) {
+    await fetchNotifications()
+    await fetchSubscriptionStats()
+    await fetchRealRentals()
   }
 })
 </script>
@@ -331,5 +520,10 @@ onMounted(async () => {
   justify-content: center;
   min-height: 200px;
   text-align: center;
+}
+
+.notification-unread {
+  background-color: #e3f2fd;
+  border-left: 4px solid #1976d2;
 }
 </style> 

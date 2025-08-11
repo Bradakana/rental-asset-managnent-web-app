@@ -84,6 +84,21 @@
         <div class="car-details-actions">
           <button class="photo-btn">Photo</button>
           <button class="plan-btn">Plan</button>
+          <button 
+            v-if="isLoggedIn"
+            class="subscribe-btn" 
+            @click="handleSubscribe"
+            :disabled="subscribing || isSubscribed"
+          >
+            {{ subscribing ? 'Subscribing...' : (isSubscribed ? 'Subscribed ✓' : 'Subscribe') }}
+          </button>
+          <button 
+            v-else
+            class="login-required-btn" 
+            @click="goToLogin"
+          >
+            Login to Subscribe
+          </button>
         </div>
         <div class="car-details-description">
           <strong>Description</strong>
@@ -196,6 +211,10 @@ const fetchCars = async () => {
 };
 
 const selectedCar = ref(null);
+const subscribing = ref(false);
+const isSubscribed = ref(false);
+const subscriptions = ref([]);
+const isLoggedIn = ref(false);
 
 const filters = ref({
   type: 'Rent',
@@ -224,6 +243,103 @@ const filteredCars = computed(() => {
 
 function selectCar(car) {
   selectedCar.value = car;
+  checkAuthStatus();
+  if (isLoggedIn.value) {
+    checkSubscriptionStatus(car.id);
+  }
+}
+
+async function checkAuthStatus() {
+  try {
+    const { useAuthStore } = await import('~/stores/auth');
+    const authStore = useAuthStore();
+    await authStore.checkAuth();
+    isLoggedIn.value = authStore.isLoggedIn;
+  } catch (error) {
+    console.error('Error checking auth status:', error);
+    isLoggedIn.value = false;
+  }
+}
+
+function goToLogin() {
+  navigateTo('/pages-user/auth');
+}
+
+async function checkSubscriptionStatus(carId) {
+  try {
+    const { useAuthStore } = await import('~/stores/auth');
+    const authStore = useAuthStore();
+    
+    if (!authStore.isLoggedIn) {
+      isSubscribed.value = false;
+      return;
+    }
+
+    const token = authStore.token;
+    const response = await fetch('http://localhost:3001/api/subscriptions/my-subscriptions', {
+      headers: {
+        'Authorization': `Bearer ${token}`
+      }
+    });
+    
+    if (response.ok) {
+      const data = await response.json();
+      subscriptions.value = data.data;
+      isSubscribed.value = subscriptions.value.some(sub => 
+        sub.assetId === carId && sub.assetType === 'car' && sub.status === 'active'
+      );
+    }
+  } catch (error) {
+    console.error('Error checking subscription status:', error);
+  }
+}
+
+async function handleSubscribe() {
+  if (!selectedCar.value) return;
+  
+  try {
+    const { useAuthStore } = await import('~/stores/auth');
+    const authStore = useAuthStore();
+    
+    if (!authStore.isLoggedIn) {
+      goToLogin();
+      return;
+    }
+
+    subscribing.value = true;
+    const token = authStore.token;
+    
+    const response = await fetch('http://localhost:3001/api/subscriptions', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`
+      },
+      body: JSON.stringify({
+        assetId: selectedCar.value.id,
+        assetType: 'car',
+        preferences: {
+          emailNotifications: true,
+          priceAlerts: true,
+          availabilityAlerts: true
+        }
+      })
+    });
+    
+    const data = await response.json();
+    
+    if (data.success) {
+      isSubscribed.value = true;
+      alert('Successfully subscribed to this car!');
+    } else {
+      alert(data.error || 'Failed to subscribe');
+    }
+  } catch (error) {
+    console.error('Subscribe error:', error);
+    alert('Network error. Please try again.');
+  } finally {
+    subscribing.value = false;
+  }
 }
 
 function toggleFav(car) {
@@ -254,8 +370,9 @@ function toggleFav(car) {
 }
 
 // Lifecycle
-onMounted(() => {
-  fetchCars();
+onMounted(async () => {
+  await fetchCars();
+  await checkAuthStatus();
 });
 </script>
 
@@ -462,7 +579,7 @@ onMounted(() => {
   gap: 1rem;
   margin-bottom: 1rem;
 }
-.photo-btn, .plan-btn {
+.photo-btn, .plan-btn, .subscribe-btn {
   background: #f5f5f7;
   border: none;
   border-radius: 6px;
@@ -473,8 +590,33 @@ onMounted(() => {
   font-weight: 500;
   transition: background 0.2s;
 }
-.photo-btn:hover, .plan-btn:hover {
+.photo-btn:hover, .plan-btn:hover, .subscribe-btn:hover:not(:disabled) {
   background: #ffe066;
+}
+.subscribe-btn {
+  background: #1976d2;
+  color: white;
+}
+.subscribe-btn:hover:not(:disabled) {
+  background: #1565c0;
+}
+.subscribe-btn:disabled {
+  background: #ccc;
+  cursor: not-allowed;
+}
+.login-required-btn {
+  background: #ff9800;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  padding: 0.4rem 1.1rem;
+  font-size: 1rem;
+  cursor: pointer;
+  font-weight: 500;
+  transition: background 0.2s;
+}
+.login-required-btn:hover {
+  background: #f57c00;
 }
 .car-details-description {
   font-size: 1rem;

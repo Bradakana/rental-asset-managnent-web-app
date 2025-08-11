@@ -79,6 +79,72 @@ router.post('/register', [
   }
 });
 
+// Simple User Registration (no vendor required)
+router.post('/register-user', [
+  body('firstName').notEmpty().trim().withMessage('First name is required'),
+  body('lastName').notEmpty().trim().withMessage('Last name is required'),
+  body('email').isEmail().normalizeEmail().withMessage('Valid email is required'),
+  body('username').isLength({ min: 3 }).trim().withMessage('Username must be at least 3 characters'),
+  body('password').isLength({ min: 8 }).withMessage('Password must be at least 8 characters')
+], async (req, res) => {
+  try {
+    console.log('User registration attempt:', req.body);
+    
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+      console.log('Validation errors:', errors.array());
+      return res.status(400).json({ success: false, error: errors.array()[0].msg });
+    }
+    
+    const { firstName, lastName, email, username, password } = req.body;
+
+    // Check if user exists
+    const existingUser = await User.findOne({ $or: [{ email }, { username }] });
+    if (existingUser) {
+      console.log('User already exists:', existingUser.email);
+      return res.status(400).json({ success: false, error: 'User with this email or username already exists' });
+    }
+
+    // Create user with 'user' role
+    const user = new User({
+      firstName, 
+      lastName, 
+      email, 
+      username, 
+      password,
+      role: 'user'
+    });
+    
+    console.log('Saving new user:', { firstName, lastName, email, username, role: 'user' });
+    await user.save();
+    console.log('User saved successfully:', user._id);
+
+    // Generate token
+    const token = jwt.sign(
+      { userId: user._id },
+      process.env.JWT_SECRET || 'your-secret-key',
+      { expiresIn: '7d' }
+    );
+
+    console.log('Registration successful for user:', user.email);
+    res.status(201).json({
+      success: true,
+      user: {
+        id: user._id,
+        firstName: user.firstName,
+        lastName: user.lastName,
+        email: user.email,
+        username: user.username,
+        role: user.role
+      },
+      token
+    });
+  } catch (error) {
+    console.error('User registration error:', error);
+    res.status(500).json({ success: false, error: 'Server error during registration: ' + error.message });
+  }
+});
+
 // Login
 router.post('/login', [
   body('email').isEmail().normalizeEmail(),

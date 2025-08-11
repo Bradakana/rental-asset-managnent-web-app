@@ -62,6 +62,13 @@
         ></v-list-item>
         
         <v-list-item
+          prepend-icon="mdi-bell-ring"
+          title="Subscriptions"
+          value="subscriptions"
+          to="/admin-subscriptions"
+        ></v-list-item>
+        
+        <v-list-item
           prepend-icon="mdi-chart-line"
           title="Reports"
           value="reports"

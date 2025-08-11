@@ -1,17 +1,44 @@
 <script setup>
-import { ref } from 'vue';
+import { ref, onMounted } from 'vue';
 import { useRouter } from 'vue-router';
+import { useAuthStore } from '~/stores/auth';
 
 let mobileNav = ref(false);
+const showUserMenu = ref(false);
+const isLoggedIn = ref(false);
+const user = ref(null);
 const router = useRouter();
+const authStore = useAuthStore();
 
 let toggleMobileNav = () => {
   mobileNav.value = !mobileNav.value;
 };
 
+let toggleUserMenu = () => {
+  showUserMenu.value = !showUserMenu.value;
+};
+
 function goToAuth() {
   router.push('/pages-user/auth');
 }
+
+async function checkAuth() {
+  await authStore.checkAuth();
+  isLoggedIn.value = authStore.isLoggedIn;
+  user.value = authStore.user;
+}
+
+async function handleLogout() {
+  await authStore.logout();
+  isLoggedIn.value = false;
+  user.value = null;
+  showUserMenu.value = false;
+  router.push('/pages-user');
+}
+
+onMounted(() => {
+  checkAuth();
+});
 </script>
 
 <template>
@@ -43,6 +70,9 @@ function goToAuth() {
           <a href="/pages-user/agencies" class="navbar-link" :class="{ active: $route.path === '/pages-user/agencies' }">Real estate agencies</a>
         </li>
         <li>
+          <a href="/pages-user/subscriptions" class="navbar-link" :class="{ active: $route.path === '/pages-user/subscriptions' }">My Subscriptions</a>
+        </li>
+        <li>
           <a href="#" class="navbar-link" :class="{ active: $route.path === '/services' }">Other services</a>
         </li>
       </ul>
@@ -57,7 +87,20 @@ function goToAuth() {
             <path d="M12 21s-6.5-5.2-9-8.4C.7 10.1 1.6 7.2 4.1 6.2c1.6-.6 3.3.1 4.3 1.3C9.9 8.4 12 10.5 12 10.5s2.1-2.1 3.6-3c1-.8 2.7-1.5 4.3-1.3 2.5 1 3.4 3.9 1.1 6.4C18.5 15.8 12 21 12 21z"/>
           </svg>
         </button>
-        <button @click="goToAuth()" class="login-btn">Login</button>
+        <button v-if="!isLoggedIn" @click="goToAuth()" class="login-btn">Login</button>
+        <div v-else class="user-menu">
+          <button class="user-btn" @click="toggleUserMenu">
+            <span>{{ user?.firstName || 'User' }}</span>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <polyline points="6,9 12,15 18,9"></polyline>
+            </svg>
+          </button>
+          <div v-show="showUserMenu" class="user-dropdown">
+            <a href="/pages-user/subscriptions" class="dropdown-item">My Subscriptions</a>
+            <a href="/pages-user/favourite" class="dropdown-item">Favourites</a>
+            <button @click="handleLogout" class="dropdown-item logout-item">Logout</button>
+          </div>
+        </div>
       </div>
       <!-- Mobile Menu Button -->
       <button @click="toggleMobileNav()" type="button" class="navbar-toggle" aria-label="Toggle navigation">
@@ -95,6 +138,9 @@ function goToAuth() {
           <a @click="toggleMobileNav()" href="/pages-user/agencies" class="navbar-link" :class="{ active: $route.path === '/pages-user/agencies' }">Real estate agencies</a>
         </li>
         <li>
+          <a @click="toggleMobileNav()" href="/pages-user/subscriptions" class="navbar-link" :class="{ active: $route.path === '/pages-user/subscriptions' }">My Subscriptions</a>
+        </li>
+        <li>
           <a @click="toggleMobileNav()" href="#" class="navbar-link" :class="{ active: $route.path === '/services' }">Other services</a>
         </li>
         <li><button class="create-request-btn mt-2">Create your request</button></li>
@@ -104,7 +150,13 @@ function goToAuth() {
             <option>Mn</option>
           </select>
         </li>
-        <li><button @click="goToAuth()" class="login-btn mt-2">Login</button></li>
+        <li v-if="!isLoggedIn"><button @click="goToAuth()" class="login-btn mt-2">Login</button></li>
+        <li v-else>
+          <div class="mobile-user-info">
+            <span class="user-name">{{ user?.firstName || 'User' }}</span>
+            <button @click="handleLogout" class="mobile-logout-btn">Logout</button>
+          </div>
+        </li>
       </ul>
     </div>
   </nav>
@@ -351,5 +403,100 @@ function goToAuth() {
   height: 32px;
   margin: 0;
   padding: 0;
+}
+
+/* User Menu Styles */
+.user-menu {
+  position: relative;
+}
+
+.user-btn {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  background: none;
+  border: 1.5px solid #1d4857;
+  border-radius: 6px;
+  padding: 0.4rem 1rem;
+  font-weight: 600;
+  color: #1d4857;
+  cursor: pointer;
+  transition: background 0.2s, color 0.2s;
+}
+
+.user-btn:hover {
+  background: #1d4857;
+  color: #fff;
+}
+
+.user-dropdown {
+  position: absolute;
+  top: 100%;
+  right: 0;
+  background: #fff;
+  border: 1px solid #e0e0e0;
+  border-radius: 6px;
+  box-shadow: 0 4px 12px rgba(29, 72, 87, 0.15);
+  min-width: 180px;
+  z-index: 100;
+  margin-top: 0.5rem;
+}
+
+.dropdown-item {
+  display: block;
+  width: 100%;
+  padding: 0.75rem 1rem;
+  color: #1d4857;
+  text-decoration: none;
+  border: none;
+  background: none;
+  text-align: left;
+  cursor: pointer;
+  transition: background 0.2s;
+  border-bottom: 1px solid #f0f0f0;
+}
+
+.dropdown-item:last-child {
+  border-bottom: none;
+}
+
+.dropdown-item:hover {
+  background: #f8f9fa;
+}
+
+.logout-item {
+  color: #c62828;
+  font-weight: 600;
+}
+
+.logout-item:hover {
+  background: #ffebee;
+}
+
+/* Mobile User Info */
+.mobile-user-info {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.5rem 0;
+}
+
+.user-name {
+  font-weight: 600;
+  color: #1d4857;
+}
+
+.mobile-logout-btn {
+  background: #c62828;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  padding: 0.25rem 0.5rem;
+  font-size: 0.875rem;
+  cursor: pointer;
+}
+
+.mobile-logout-btn:hover {
+  background: #b71c1c;
 }
 </style>

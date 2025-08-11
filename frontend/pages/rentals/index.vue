@@ -307,11 +307,14 @@
 
 <script setup>
 import { ref, reactive, computed, onMounted } from 'vue'
+import { useAuthStore } from '~/stores/auth'
 
 // Admin layout ашиглах
 definePageMeta({
   layout: 'default'
 })
+
+const authStore = useAuthStore()
 
 // Reactive data
 const loading = ref(false)
@@ -364,49 +367,15 @@ const endDateRule = (v) => {
   return new Date(v) > new Date(newRental.startDate) || 'End date must be after start date'
 }
 
-// Mock data
+// Real data from API
 const stats = reactive({
-  totalRentals: 45,
-  activeRentals: 12,
-  overdueRentals: 3,
-  totalRevenue: 125000
+  totalRentals: 0,
+  activeRentals: 0,
+  overdueRentals: 0,
+  totalRevenue: 0
 })
 
-const rentals = ref([
-  {
-    id: 1,
-    assetName: 'Toyota Camry 2023',
-    assetType: 'car',
-    renterName: 'John Doe',
-    renterEmail: 'john@example.com',
-    startDate: '2024-01-15',
-    endDate: '2024-01-20',
-    totalAmount: 225,
-    status: 'active'
-  },
-  {
-    id: 2,
-    assetName: 'Downtown Apartment',
-    assetType: 'real-estate',
-    renterName: 'Jane Smith',
-    renterEmail: 'jane@example.com',
-    startDate: '2024-01-10',
-    endDate: '2024-02-10',
-    totalAmount: 3720,
-    status: 'active'
-  },
-  {
-    id: 3,
-    assetName: 'Honda Civic 2022',
-    assetType: 'car',
-    renterName: 'Mike Johnson',
-    renterEmail: 'mike@example.com',
-    startDate: '2024-01-12',
-    endDate: '2024-01-15',
-    totalAmount: 105,
-    status: 'completed'
-  }
-])
+const rentals = ref([])
 
 const availableAssets = ref([
   { id: 1, name: 'Toyota Camry 2023', type: 'car' },
@@ -546,8 +515,64 @@ const completeRental = async (id) => {
   }
 }
 
-onMounted(() => {
-  loadRentals()
+// Fetch real rentals data
+const fetchRentals = async () => {
+  try {
+    loading.value = true
+    const response = await fetch('http://localhost:3001/api/rentals', {
+      headers: {
+        'Authorization': `Bearer ${authStore.token}`
+      }
+    })
+
+    if (response.ok) {
+      const data = await response.json()
+      if (data.success && data.data) {
+        rentals.value = data.data.map(rental => ({
+          id: rental._id,
+          assetName: rental.assetId?.name || rental.assetId?.model || rental.assetId?.title || 'Unknown Asset',
+          assetType: rental.assetId?.type || 'asset',
+          renterName: rental.renterId?.firstName ? `${rental.renterId.firstName} ${rental.renterId.lastName}` : 'Unknown Renter',
+          renterEmail: rental.renterId?.email || '',
+          startDate: rental.startDate,
+          endDate: rental.endDate,
+          totalAmount: rental.totalAmount,
+          dailyRate: rental.dailyRate,
+          deposit: rental.deposit,
+          status: rental.status,
+          notes: rental.notes
+        }))
+
+        // Update statistics
+        stats.totalRentals = data.data.length
+        stats.activeRentals = data.data.filter(r => r.status === 'active').length
+        stats.overdueRentals = data.data.filter(r => r.status === 'overdue').length
+        stats.totalRevenue = data.data.reduce((sum, r) => sum + (r.totalAmount || 0), 0)
+      }
+    } else {
+      console.error('Failed to fetch rentals')
+    }
+  } catch (error) {
+    console.error('Error fetching rentals:', error)
+  } finally {
+    loading.value = false
+  }
+}
+
+onMounted(async () => {
+  await authStore.checkAuth()
+  
+  if (!authStore.isLoggedIn) {
+    navigateTo('/auth')
+    return
+  }
+  
+  if (!authStore.canAccessAdminPages) {
+    navigateTo('/pages-user')
+    return
+  }
+
+  await fetchRentals()
 })
 </script>
 

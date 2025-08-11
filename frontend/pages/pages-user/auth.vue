@@ -49,6 +49,18 @@
           <input class="auth-input" id="password" type="password" v-model="password" placeholder="Password" />
           <span v-if="errors.password" class="auth-error">{{ errors.password }}</span>
           <div v-if="!isLogin" class="auth-extra">
+            <label class="auth-label" for="firstName">First Name</label>
+            <input class="auth-input" id="firstName" type="text" v-model="firstName" placeholder="First Name" />
+            <span v-if="errors.firstName" class="auth-error">{{ errors.firstName }}</span>
+            
+            <label class="auth-label" for="lastName">Last Name</label>
+            <input class="auth-input" id="lastName" type="text" v-model="lastName" placeholder="Last Name" />
+            <span v-if="errors.lastName" class="auth-error">{{ errors.lastName }}</span>
+            
+            <label class="auth-label" for="username">Username</label>
+            <input class="auth-input" id="username" type="text" v-model="username" placeholder="Username" />
+            <span v-if="errors.username" class="auth-error">{{ errors.username }}</span>
+            
             <label class="auth-label" for="confirmPassword">Confirm Password</label>
             <input class="auth-input" id="confirmPassword" type="password" v-model="confirmPassword" placeholder="Confirm Password" />
             <span v-if="errors.confirmPassword" class="auth-error">{{ errors.confirmPassword }}</span>
@@ -97,20 +109,36 @@ export default {
       email: "",
       password: "",
       confirmPassword: "",
+      firstName: "",
+      lastName: "",
+      username: "",
       rememberMe: false,
       errors: {
         email: "",
         password: "",
-        confirmPassword: ""
+        confirmPassword: "",
+        firstName: "",
+        lastName: "",
+        username: ""
       }
     };
   },
   methods: {
     toggleForm() {
       this.isLogin = !this.isLogin;
-      this.errors = { email: "", password: "", confirmPassword: "" };
+      this.errors = { 
+        email: "", 
+        password: "", 
+        confirmPassword: "",
+        firstName: "",
+        lastName: "",
+        username: ""
+      };
       this.password = "";
       this.confirmPassword = "";
+      this.firstName = "";
+      this.lastName = "";
+      this.username = "";
     },
     goToAdminAuth() {
       // Admin login хуудас руу шилжих
@@ -118,7 +146,6 @@ export default {
     },
     validateEmail(email) {
       if (!email.trim()) return "Email is required.";
-      if (email.includes("@gmail")) return "Gmail addresses are not allowed.";
       const re = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
       if (!re.test(email)) return "Invalid email format.";
       return "";
@@ -133,27 +160,102 @@ export default {
       if (password !== confirmPassword) return "Passwords do not match.";
       return "";
     },
-    handleLogin() {
+    validateFirstName(firstName) {
+      if (!firstName.trim()) return "First name is required.";
+      if (firstName.length < 2) return "First name must be at least 2 characters.";
+      return "";
+    },
+    validateLastName(lastName) {
+      if (!lastName.trim()) return "Last name is required.";
+      if (lastName.length < 2) return "Last name must be at least 2 characters.";
+      return "";
+    },
+    validateUsername(username) {
+      if (!username.trim()) return "Username is required.";
+      if (username.length < 3) return "Username must be at least 3 characters.";
+      if (username.length > 20) return "Username must be less than 20 characters.";
+      if (!/^[a-zA-Z0-9_]+$/.test(username)) return "Username can only contain letters, numbers, and underscores.";
+      return "";
+    },
+    async handleLogin() {
       this.errors.email = this.validateEmail(this.email);
       this.errors.password = this.validatePassword(this.password);
       if (!this.errors.email && !this.errors.password) {
-        if (this.rememberMe) {
-          localStorage.setItem("rememberedEmail", this.email);
-        } else {
-          localStorage.removeItem("rememberedEmail");
+        try {
+          const { useAuthStore } = await import('~/stores/auth');
+          const authStore = useAuthStore();
+          
+          const result = await authStore.login({
+            email: this.email,
+            password: this.password
+          });
+          
+          if (result.success) {
+            if (this.rememberMe) {
+              localStorage.setItem("rememberedEmail", this.email);
+            } else {
+              localStorage.removeItem("rememberedEmail");
+            }
+            // Redirect to user dashboard
+            this.$router.push('/pages-user');
+          } else {
+            this.errors.email = result.error || "Login failed";
+          }
+        } catch (error) {
+          this.errors.email = "Network error. Please try again.";
         }
-        alert("Login successful!");
       }
     },  
-    handleRegister() {
+    async handleRegister() {
       this.errors.email = this.validateEmail(this.email);
       this.errors.password = this.validatePassword(this.password);
       this.errors.confirmPassword = this.validateConfirmPassword(this.password, this.confirmPassword);
-      if (!this.errors.email && !this.errors.password && !this.errors.confirmPassword) {
-        alert("Registration successful!");
-        this.isLogin = true;
-        this.password = "";
-        this.confirmPassword = "";
+      this.errors.firstName = this.validateFirstName(this.firstName);
+      this.errors.lastName = this.validateLastName(this.lastName);
+      this.errors.username = this.validateUsername(this.username);
+      
+      console.log('Validation errors:', this.errors);
+      const hasErrors = !!(this.errors.email || this.errors.password || this.errors.confirmPassword || 
+          this.errors.firstName || this.errors.lastName || this.errors.username);
+      
+      console.log('Has validation errors:', hasErrors);
+      
+      if (!hasErrors) {
+        try {
+          console.log('Starting registration process...');
+          const { useAuthStore } = await import('~/stores/auth');
+          const authStore = useAuthStore();
+          
+          const userData = {
+            firstName: this.firstName,
+            lastName: this.lastName,
+            email: this.email,
+            username: this.username,
+            password: this.password
+          };
+          
+          console.log('Calling registerUser with:', userData);
+          const result = await authStore.registerUser(userData);
+          console.log('Registration result:', result);
+          
+          if (result.success) {
+            alert("Registration successful!");
+            this.isLogin = true;
+            this.password = "";
+            this.confirmPassword = "";
+            this.firstName = "";
+            this.lastName = "";
+            this.username = "";
+            // Redirect to user dashboard
+            this.$router.push('/pages-user');
+          } else {
+            console.error('Registration failed:', result.error);
+            this.errors.email = result.error || "Registration failed";
+          }
+        } catch (error) {
+          console.error('Registration error in component:', error);
+          this.errors.email = "Network error. Please try again.";
+        }
       }
     }
   },
