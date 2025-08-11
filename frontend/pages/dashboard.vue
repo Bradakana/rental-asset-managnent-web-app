@@ -3,8 +3,8 @@
     <!-- Page Header -->
     <v-row class="mb-6">
       <v-col>
-        <h1 class="text-h4 font-weight-bold">Dashboard</h1>
-        <p class="text-subtitle-1 text-medium-emphasis">Welcome back, {{ user?.firstName || 'User' }}!</p>
+        <h1 class="text-h4 font-weight-bold">{{ $t('dashboard.title') }}</h1>
+        <p class="text-subtitle-1 text-medium-emphasis">{{ $t('dashboard.welcome') }}, {{ user?.firstName || 'User' }}!</p>
       </v-col>
     </v-row>
 
@@ -15,7 +15,7 @@
           <v-card-text class="text-center">
             <v-icon size="48" color="primary" class="mb-2">mdi-car</v-icon>
             <div class="text-h4 font-weight-bold">{{ stats.totalAssets }}</div>
-            <div class="text-subtitle-2 text-medium-emphasis">Total Assets</div>
+            <div class="text-subtitle-2 text-medium-emphasis">{{ $t('dashboard.statistics.totalAssets') }}</div>
           </v-card-text>
         </v-card>
       </v-col>
@@ -35,7 +35,7 @@
           <v-card-text class="text-center">
             <v-icon size="48" color="warning" class="mb-2">mdi-clock</v-icon>
             <div class="text-h4 font-weight-bold">{{ stats.rentedAssets }}</div>
-            <div class="text-subtitle-2 text-medium-emphasis">Currently Rented</div>
+            <div class="text-subtitle-2 text-medium-emphasis">{{ $t('dashboard.statistics.totalRentals') }}</div>
           </v-card-text>
         </v-card>
       </v-col>
@@ -45,7 +45,7 @@
           <v-card-text class="text-center">
             <v-icon size="48" color="info" class="mb-2">mdi-bell</v-icon>
             <div class="text-h4 font-weight-bold">{{ stats.totalSubscriptions }}</div>
-            <div class="text-subtitle-2 text-medium-emphasis">Active Subscriptions</div>
+            <div class="text-subtitle-2 text-medium-emphasis">{{ $t('dashboard.statistics.totalSubscriptions') }}</div>
           </v-card-text>
         </v-card>
       </v-col>

@@ -121,10 +121,10 @@
         </template>
         <v-list>
           <v-list-item @click="changeLanguage('en')">
-            <v-list-item-title>English</v-list-item-title>
+            <v-list-item-title>{{ $t('nav.lang.en') }}</v-list-item-title>
           </v-list-item>
           <v-list-item @click="changeLanguage('mn')">
-            <v-list-item-title>Монгол</v-list-item-title>
+            <v-list-item-title>{{ $t('nav.lang.mn') }}</v-list-item-title>
           </v-list-item>
         </v-list>
       </v-menu>
@@ -172,10 +172,11 @@
 </template>
 
 <script setup>
-import { ref, computed } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import { useAuthStore } from '~/stores/auth'
 
 const authStore = useAuthStore()
+const { locale, setLocale } = useI18n()
 
 const drawer = ref(true)
 const rail = ref(false)
@@ -189,9 +190,9 @@ const toggleTheme = () => {
   console.log('Theme toggled to:', isDark.value ? 'dark' : 'light')
 }
 
-const changeLanguage = (locale) => {
-  // TODO: Implement language change
-  console.log('Changing language to:', locale)
+const changeLanguage = (newLocale) => {
+  setLocale(newLocale)
+  console.log('Language changed to:', newLocale)
 }
 
 const goToProfile = () => {

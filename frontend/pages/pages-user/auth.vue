@@ -5,7 +5,7 @@
       <div class="auth-form-section">
         <!-- User Type Selection -->
         <div class="user-type-selection">
-          <h2 class="selection-title">Choose Login Type</h2>
+          <h2 class="selection-title">{{ $t('auth.pleaseLogin') }}</h2>
           <div class="type-buttons">
             <button 
               type="button" 
@@ -42,8 +42,8 @@
             <span v-else>Register a new account to get started.</span>
           </p>
         <form class="auth-form" @submit.prevent="isLogin ? handleLogin() : handleRegister()">
-          <label class="auth-label" for="email">Email Address</label>
-          <input class="auth-input" id="email" type="email" v-model="email" placeholder="Email Address" />
+          <label class="auth-label" for="email">{{ $t('auth.email') }}</label>
+          <input class="auth-input" id="email" type="email" v-model="email" :placeholder="$t('auth.email')" />
           <span v-if="errors.email" class="auth-error">{{ errors.email }}</span>
           <label class="auth-label" for="password">Password</label>
           <input class="auth-input" id="password" type="password" v-model="password" placeholder="Password" />
@@ -67,12 +67,12 @@
           </div>
           <div class="auth-options">
             <label><input type="checkbox" v-model="rememberMe" /> Remember Me</label>
-            <a href="#" class="auth-link" v-if="isLogin">Forgot Password?</a>
+            <a href="#" class="auth-link" v-if="isLogin">{{ $t('auth.forgotPassword') }}</a>
           </div>
           <div class="auth-btns">
-            <button type="submit" class="auth-btn primary">{{ isLogin ? 'Login' : 'Register' }}</button>
+            <button type="submit" class="auth-btn primary">{{ isLogin ? $t('auth.login') : $t('auth.register') }}</button>
             <button type="button" class="auth-btn outline" @click="toggleForm">
-              {{ isLogin ? 'Sign Up' : 'Login' }}
+              {{ isLogin ? $t('auth.signUp') : $t('auth.login') }}
             </button>
           </div>
           <div class="auth-social">

@@ -80,26 +80,26 @@
         </div>
         <img :src="selectedEstate.image" class="estate-details-img" alt="estate" />
         <div class="estate-details-actions">
-          <button class="photo-btn">Photo</button>
-          <button class="plan-btn">Plan</button>
+          <button class="photo-btn">{{ $t('estate.photo') }}</button>
+          <button class="plan-btn">{{ $t('estate.plan') }}</button>
           <button 
             v-if="isLoggedIn"
             class="subscribe-btn" 
             @click="handleSubscribe"
             :disabled="subscribing || isSubscribed"
           >
-            {{ subscribing ? 'Subscribing...' : (isSubscribed ? 'Subscribed ✓' : 'Subscribe') }}
+            {{ subscribing ? $t('estate.subscribing') : (isSubscribed ? $t('estate.subscribed') : $t('estate.subscribe')) }}
           </button>
           <button 
             v-else
             class="login-required-btn" 
             @click="goToLogin"
           >
-            Login to Subscribe
+            {{ $t('estate.loginToSubscribe') }}
           </button>
         </div>
         <div class="estate-details-description">
-          <strong>Description</strong>
+          <strong>{{ $t('estate.description') }}</strong>
           <p>{{ selectedEstate.description }}</p>
         </div>
       </div>

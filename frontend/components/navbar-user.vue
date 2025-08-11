@@ -9,6 +9,8 @@ const isLoggedIn = ref(false);
 const user = ref(null);
 const router = useRouter();
 const authStore = useAuthStore();
+const { locale, setLocale } = useI18n();
+const currentLocale = ref(locale.value);
 
 let toggleMobileNav = () => {
   mobileNav.value = !mobileNav.value;
@@ -36,8 +38,15 @@ async function handleLogout() {
   router.push('/pages-user');
 }
 
+function changeLanguage(event) {
+  const newLocale = event.target.value;
+  setLocale(newLocale);
+  currentLocale.value = newLocale;
+}
+
 onMounted(() => {
   checkAuth();
+  currentLocale.value = locale.value;
 });
 </script>
 
@@ -78,9 +87,9 @@ onMounted(() => {
       </ul>
       <div class="navbar-actions">
         <button class="create-request-btn">Create your request</button>
-        <select class="lang-select">
-          <option>Eng</option>
-          <option>Mgl</option>
+        <select class="lang-select" @change="changeLanguage" v-model="currentLocale">
+          <option value="en">{{ $t('nav.lang.en') }}</option>
+          <option value="mn">{{ $t('nav.lang.mn') }}</option>
         </select>
         <button class="icon-btn" title="Favorites" @click="router.push('/pages-user/favourite')">
           <svg width="22" height="22" fill="none" stroke="#1d4857" stroke-width="2" viewBox="0 0 24 24">
@@ -145,9 +154,9 @@ onMounted(() => {
         </li>
         <li><button class="create-request-btn mt-2">Create your request</button></li>
         <li>
-          <select class="lang-select mt-2">
-            <option>Eng</option>
-            <option>Mn</option>
+          <select class="lang-select mt-2" @change="changeLanguage" v-model="currentLocale">
+            <option value="en">{{ $t('nav.lang.en') }}</option>
+            <option value="mn">{{ $t('nav.lang.mn') }}</option>
           </select>
         </li>
         <li v-if="!isLoggedIn"><button @click="goToAuth()" class="login-btn mt-2">Login</button></li>
