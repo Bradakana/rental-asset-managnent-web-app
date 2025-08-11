@@ -54,7 +54,7 @@ export default defineNuxtConfig({
     }
   },
 
-  // intlify хэсгийг устгана, оронд нь i18n тохиргоо нэмнэ
+  // i18n configuration
   i18n: {
     locales: [
       { code: 'mn', name: 'Монгол', file: 'mn.json' },
@@ -62,7 +62,13 @@ export default defineNuxtConfig({
     ],
     defaultLocale: 'mn',
     lazy: true,
-    langDir: '../locales/',
-    vueI18n: './i18n.config.js'
+    langDir: './',
+    vueI18n: './i18n.config.js',
+    strategy: 'no_prefix',
+    detectBrowserLanguage: {
+      useCookie: true,
+      cookieKey: 'i18n_redirected',
+      redirectOn: 'root'
+    }
   }
 })

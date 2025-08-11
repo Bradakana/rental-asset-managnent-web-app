@@ -2,6 +2,7 @@
 import { ref, onMounted } from 'vue';
 import { useRouter } from 'vue-router';
 import { useAuthStore } from '~/stores/auth';
+import { useI18n } from 'vue-i18n';
 
 let mobileNav = ref(false);
 const showUserMenu = ref(false);
@@ -62,10 +63,10 @@ onMounted(() => {
       <!-- Desktop Menu -->
       <ul class="navbar-links">
         <li>
-          <a href="/pages-user/estate" class="navbar-link" :class="{ active: $route.path === '/pages-user/estate' }">Real estate</a>
+          <a href="/pages-user/estate" class="navbar-link" :class="{ active: $route.path === '/pages-user/estate' }">{{ $t('nav.estate') }}</a>
         </li>
         <li class="dropdown">
-          <a href="/pages-user/cars" class="navbar-link" :class="{ active: $route.path.startsWith('/pages-user/cars') }">Find Cars</a>
+          <a href="/pages-user/cars" class="navbar-link" :class="{ active: $route.path.startsWith('/pages-user/cars') }">{{ $t('nav.cars') }}</a>
           <ul class="dropdown-menu">
             <li><a href="/pages-user/cars?type=sedan" class="navbar-link">Sedan</a></li>
             <li><a href="/pages-user/cars?type=suv" class="navbar-link">SUV</a></li>
@@ -73,13 +74,13 @@ onMounted(() => {
           </ul>
         </li>
         <li>
-          <a href="/pages-user/about" class="navbar-link" :class="{ active: $route.path === '/pages-user/about' }">About us</a>
+          <a href="/pages-user/about" class="navbar-link" :class="{ active: $route.path === '/pages-user/about' }">{{ $t('nav.about') }}</a>
         </li>
         <li>
           <a href="/pages-user/agencies" class="navbar-link" :class="{ active: $route.path === '/pages-user/agencies' }">Real estate agencies</a>
         </li>
         <li>
-          <a href="/pages-user/subscriptions" class="navbar-link" :class="{ active: $route.path === '/pages-user/subscriptions' }">My Subscriptions</a>
+          <a href="/pages-user/subscriptions" class="navbar-link" :class="{ active: $route.path === '/pages-user/subscriptions' }">{{ $t('nav.mySubscriptions') }}</a>
         </li>
         <li>
           <a href="#" class="navbar-link" :class="{ active: $route.path === '/services' }">Other services</a>
