@@ -49,21 +49,26 @@
           <input class="auth-input" id="password" type="password" v-model="password" placeholder="Password" />
           <span v-if="errors.password" class="auth-error">{{ errors.password }}</span>
           <div v-if="!isLogin" class="auth-extra">
-            <label class="auth-label" for="firstName">First Name</label>
-            <input class="auth-input" id="firstName" type="text" v-model="firstName" placeholder="First Name" />
-            <span v-if="errors.firstName" class="auth-error">{{ errors.firstName }}</span>
-            
-            <label class="auth-label" for="lastName">Last Name</label>
-            <input class="auth-input" id="lastName" type="text" v-model="lastName" placeholder="Last Name" />
-            <span v-if="errors.lastName" class="auth-error">{{ errors.lastName }}</span>
-            
-            <label class="auth-label" for="username">Username</label>
-            <input class="auth-input" id="username" type="text" v-model="username" placeholder="Username" />
-            <span v-if="errors.username" class="auth-error">{{ errors.username }}</span>
-            
-            <label class="auth-label" for="confirmPassword">Confirm Password</label>
-            <input class="auth-input" id="confirmPassword" type="password" v-model="confirmPassword" placeholder="Confirm Password" />
-            <span v-if="errors.confirmPassword" class="auth-error">{{ errors.confirmPassword }}</span>
+            <div>
+              <label class="auth-label" for="firstName">First Name</label>
+              <input class="auth-input" id="firstName" type="text" v-model="firstName" placeholder="First Name" />
+              <span v-if="errors.firstName" class="auth-error">{{ errors.firstName }}</span>
+            </div>
+            <div>
+              <label class="auth-label" for="lastName">Last Name</label>
+              <input class="auth-input" id="lastName" type="text" v-model="lastName" placeholder="Last Name" />
+              <span v-if="errors.lastName" class="auth-error">{{ errors.lastName }}</span>
+            </div>
+            <div>
+              <label class="auth-label" for="username">Username</label>
+              <input class="auth-input" id="username" type="text" v-model="username" placeholder="Username" />
+              <span v-if="errors.username" class="auth-error">{{ errors.username }}</span>
+            </div>
+            <div>
+              <label class="auth-label" for="confirmPassword">Confirm Password</label>
+              <input class="auth-input" id="confirmPassword" type="password" v-model="confirmPassword" placeholder="Confirm Password" />
+              <span v-if="errors.confirmPassword" class="auth-error">{{ errors.confirmPassword }}</span>
+            </div>
           </div>
           <div class="auth-options">
             <label><input type="checkbox" v-model="rememberMe" /> Remember Me</label>
@@ -411,6 +416,12 @@ export default {
   margin-bottom: 8px;
   margin-top: -8px;
   display: block;
+}
+.auth-form label,
+.auth-form input,
+.auth-form span.auth-error {
+  display: block;
+  width: 100%;
 }
 @media (max-width: 900px) {
   .auth-container {

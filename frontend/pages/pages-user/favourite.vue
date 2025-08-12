@@ -6,8 +6,21 @@
         No favourite items yet.
       </div>
       <div v-else class="favourite-list">
-        <div v-for="item in favourites" :key="item.id" class="favourite-card">
+        <div
+          v-for="item in favourites"
+          :key="item.id"
+          class="favourite-card"
+          @click="goToDetail(item)"
+          style="cursor:pointer; position:relative;"
+        >
           <img :src="item.image" alt="Favourite" class="favourite-img" />
+          <button
+            class="unfavourite-btn"
+            @click.stop="removeFavourite(item.id)"
+            title="Remove from favourites"
+          >
+            ♥
+          </button>
           <div class="favourite-info">
             <h2 class="favourite-item-title">{{ item.title }}</h2>
             <p class="favourite-item-location">{{ item.location }}</p>
@@ -21,20 +34,33 @@
 </template>
 
 <script setup>
-// User layout ашиглах
 definePageMeta({
   layout: 'user'
 })
 
 import { ref, onMounted } from 'vue'
+import { useRouter } from 'vue-router'
 
 const favourites = ref([])
+const router = useRouter()
 
 onMounted(() => {
-  // Load favourites from localStorage (shared by cars.vue and estate.vue)
   const favs = JSON.parse(localStorage.getItem("favourites") || "[]");
   favourites.value = favs;
 })
+
+function removeFavourite(id) {
+  favourites.value = favourites.value.filter(item => item.id !== id)
+  localStorage.setItem("favourites", JSON.stringify(favourites.value))
+}
+
+function goToDetail(item) {
+  if (item.type === 'car') {
+    router.push(`/cars/${item.id}`)
+  } else if (item.type === 'estate') {
+    router.push(`/estate/${item.id}`)
+  }
+}
 </script>
 
 <style scoped>
@@ -80,6 +106,7 @@ onMounted(() => {
   flex-direction: column;
   align-items: center;
   padding: 1.2rem;
+  position: relative;
 }
 .favourite-img {
   width: 100%;
@@ -104,5 +131,26 @@ onMounted(() => {
   color: #444;
   font-size: 1rem;
   margin-bottom: 0.2rem;
+}
+.unfavourite-btn {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  background: #fff;
+  border: none;
+  color: #e74c3c;
+  font-size: 1.5rem;
+  cursor: pointer;
+  border-radius: 50%;
+  width: 36px;
+  height: 36px;
+  box-shadow: 0 2px 8px rgba(29, 72, 87, 0.10);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.2s;
+}
+.unfavourite-btn:hover {
+  background: #ffeaea;
 }
 </style>
