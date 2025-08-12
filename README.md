@@ -57,62 +57,6 @@ node scripts/createTestUsers.js
 - MongoDB (local or cloud instance)
 - npm or yarn package manager
 
-## Environment Setup
-
-### 1. Clone the repository
-```bash
-git clone <repository-url>
-cd rental-asset-management-web-app
-```
-
-### 2. Frontend Environment Setup
-
-Copy the example environment file:
-```bash
-cp env.example .env
-```
-
-Edit `.env` file with your configuration:
-```env
-# Frontend Environment Variables
-API_BASE=http://localhost:3001
-NODE_ENV=development
-NUXT_PUBLIC_API_BASE=http://localhost:3001
-```
-
-### 3. Backend Environment Setup
-
-Navigate to the server directory:
-```bash
-cd server
-cp env.example .env
-```
-
-Edit `server/.env` file with your configuration:
-```env
-# Backend Environment Variables
-PORT=3001
-NODE_ENV=development
-
-# Database Configuration
-MONGODB_URI=mongodb://localhost:27017/rental-management
-
-# JWT Configuration
-JWT_SECRET=your-super-secret-jwt-key-change-this-in-production
-JWT_EXPIRES_IN=7d
-
-# Frontend URL for CORS
-FRONTEND_URL=http://localhost:3000
-
-# File Upload Configuration
-MAX_FILE_SIZE=10485760
-UPLOAD_PATH=./uploads
-
-# Security Configuration
-RATE_LIMIT_WINDOW_MS=900000
-RATE_LIMIT_MAX_REQUESTS=100
-```
-
 ## Installation & Running
 
 ### 1. Install Frontend Dependencies
@@ -151,18 +95,6 @@ npm run dev
 npm run dev
 ```
 
-#### Option B: Use the provided scripts
-
-Create a `package.json` script to run both services:
-```bash
-# Add this to the root package.json scripts
-"dev:full": "concurrently \"npm run dev\" \"cd server && npm run dev\""
-```
-
-Then run:
-```bash
-npm run dev:full
-```
 
 ## Access the Application
 
