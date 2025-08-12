@@ -181,36 +181,3 @@ npm start
 └── uploads/                # File uploads directory
 ```
 
-## Troubleshooting
-
-### Common Issues
-
-1. **MongoDB Connection Error**
-   - Ensure MongoDB is running
-   - Check MONGODB_URI in environment file
-   - Verify network connectivity
-
-2. **CORS Errors**
-   - Check FRONTEND_URL in backend .env
-   - Ensure frontend and backend ports match
-
-3. **JWT Errors**
-   - Verify JWT_SECRET is set
-   - Check token expiration settings
-
-4. **File Upload Issues**
-   - Ensure uploads directory exists
-   - Check file size limits
-   - Verify file permissions
-
-## Contributing
-
-1. Fork the repository
-2. Create a feature branch
-3. Make your changes
-4. Test thoroughly
-5. Submit a pull request
-
-## License
-
-MIT License - see LICENSE file for details
