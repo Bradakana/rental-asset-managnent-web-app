@@ -227,8 +227,6 @@
               label="Address"
             />
             
-            <v-text-field v-model="newRenter.imageUrl" label="Зурагны линк" />
-            
             <v-row>
               <v-col cols="12" md="6">
                 <v-text-field
@@ -248,14 +246,6 @@
               v-model="newRenter.notes"
               label="Notes"
               rows="3"
-            />
-            
-            <v-file-input
-              v-model="newRenter.documents"
-              label="Upload Documents"
-              accept=".pdf,.jpg,.jpeg,.png"
-              prepend-icon="mdi-file-upload"
-              multiple
             />
           </v-form>
         </v-card-text>
@@ -347,9 +337,7 @@ const newRenter = reactive({
   address: '',
   licenseNumber: '',
   passportNumber: '',
-  notes: '',
-  documents: [],
-  imageUrl: '' // Add imageUrl to the newRenter object
+  notes: ''
 })
 
 // Validation rules
@@ -482,10 +470,7 @@ const saveRenter = async () => {
   try {
     await $fetch(`${useRuntimeConfig().public.apiBase}/api/renters`, {
       method: 'POST',
-      body: {
-        ...newRenter,
-        imageUrl: newRenter.imageUrl
-      }
+      body: newRenter
     })
     // Амжилттай бол form-оо хаах, шинэчлэх гэх мэт
   } catch (error) {
@@ -504,9 +489,7 @@ const resetForm = () => {
     address: '',
     licenseNumber: '',
     passportNumber: '',
-    notes: '',
-    documents: [],
-    imageUrl: '' // Add imageUrl to the newRenter object
+    notes: ''
   })
 }
 

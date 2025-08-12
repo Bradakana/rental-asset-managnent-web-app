@@ -394,7 +394,7 @@
 </template>
 
 <script setup>
-import { ref, reactive, computed, onMounted } from 'vue'
+import { ref, reactive, computed, onMounted, onUnmounted } from 'vue'
 import { useAuthStore } from '~/stores/auth'
 
 // Admin layout ашиглах
@@ -403,6 +403,7 @@ definePageMeta({
 })
 
 const authStore = useAuthStore()
+const { $socket } = useNuxtApp()
 
 // Reactive state
 const loading = ref(false)
@@ -645,6 +646,26 @@ const showSnackbar = (message, color = 'success') => {
 }
 
 // Lifecycle
+// Real-time subscription updates
+const handleSubscriptionUpdate = (updateData) => {
+  console.log('📋 Real-time subscription update received:', updateData)
+  
+  if (updateData.type === 'subscription_created') {
+    // Add new subscription to the list
+    if (updateData.data.subscription) {
+      subscriptions.value.unshift(updateData.data.subscription)
+      
+      // Update stats
+      if (updateData.data.stats) {
+        Object.assign(stats, updateData.data.stats)
+      }
+      
+      // Show success snackbar
+      showSnackbar(`New subscription from ${updateData.data.subscription.user.firstName} ${updateData.data.subscription.user.lastName}`, 'success')
+    }
+  }
+}
+
 onMounted(async () => {
   await authStore.checkAuth()
   
@@ -659,6 +680,31 @@ onMounted(async () => {
   }
 
   await Promise.all([fetchSubscriptions(), fetchStats()])
+  
+  // Setup real-time connection for admin subscriptions
+  if ($socket && authStore.user?.vendorId) {
+    console.log('🔌 Setting up real-time subscriptions for vendor:', authStore.user.vendorId)
+    $socket.connect()
+    $socket.joinVendorRoom(authStore.user.vendorId)
+    $socket.onDashboardUpdate(handleSubscriptionUpdate)
+    
+    console.log('✅ Real-time subscriptions connected for vendor:', authStore.user.vendorId)
+  } else {
+    console.warn('⚠️ Cannot setup real-time subscriptions:', {
+      hasSocket: !!$socket,
+      vendorId: authStore.user?.vendorId,
+      user: authStore.user
+    })
+  }
+})
+
+onUnmounted(() => {
+  // Cleanup real-time connection
+  if ($socket && authStore.user?.vendorId) {
+    $socket.offDashboardUpdate(handleSubscriptionUpdate)
+    $socket.leaveVendorRoom(authStore.user.vendorId)
+    console.log('🔌 Subscriptions real-time connection cleaned up')
+  }
 })
 </script>
 

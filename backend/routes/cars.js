@@ -1,18 +1,11 @@
 const express = require('express');
 const { body, validationResult } = require('express-validator');
 const Car = require('../models/Car');
+const { extractVendor } = require('../middleware/auth');
 
 console.log('Car model loaded:', !!Car); // Debug log
 
 const router = express.Router();
-
-// Middleware to extract vendorId from token (simplified for now)
-const extractVendor = (req, res, next) => {
-  // TODO: Implement proper JWT verification
-  // For now, we'll use a default vendorId or get it from headers
-  req.vendorId = req.headers['vendor-id'] || 'default-vendor';
-  next();
-};
 
 // GET /api/cars - Get all cars (public)
 router.get('/', async (req, res) => {

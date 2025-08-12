@@ -6,25 +6,9 @@ const User = require('../models/User');
 const Car = require('../models/Car');
 const Estate = require('../models/Estate');
 const Asset = require('../models/Asset');
+const { verifyToken } = require('../middleware/auth');
 
 const router = express.Router();
-
-// Middleware to verify JWT token
-const verifyToken = async (req, res, next) => {
-  try {
-    const token = req.header('Authorization')?.replace('Bearer ', '');
-    if (!token) {
-      return res.status(401).json({ success: false, error: 'Access denied. No token provided.' });
-    }
-
-    const jwt = require('jsonwebtoken');
-    const decoded = jwt.verify(token, process.env.JWT_SECRET || 'your-secret-key');
-    req.userId = decoded.userId;
-    next();
-  } catch (error) {
-    res.status(400).json({ success: false, error: 'Invalid token.' });
-  }
-};
 
 // Get asset details by type and ID
 const getAssetDetails = async (assetType, assetId) => {
@@ -65,8 +49,15 @@ router.post('/', [
 
     // Check if asset exists
     const asset = await getAssetDetails(assetType, assetId);
+    console.log('📋 Asset found for subscription:', asset ? `${asset.name || asset.model || asset.title} (vendorId: ${asset.vendorId})` : 'null');
+    
     if (!asset) {
       return res.status(404).json({ success: false, error: 'Asset not found' });
+    }
+    
+    if (!asset.vendorId) {
+      console.error('❌ Asset has no vendorId:', asset);
+      return res.status(400).json({ success: false, error: 'Asset has no vendor assigned' });
     }
 
     // Check if user already subscribed to this asset
@@ -97,9 +88,59 @@ router.post('/', [
     });
 
     await subscription.save();
+    console.log('✅ Subscription created successfully:', subscription._id, 'for vendorId:', asset.vendorId);
 
     // Get user details for notification
     const user = await User.findById(req.userId);
+    
+    // *** AUTOMATIC RENTER CREATION ***
+    // Check if user already exists as a renter for this vendor
+    const Renter = require('../models/Renter');
+    let existingRenter = await Renter.findOne({
+      email: user.email,
+      vendorId: asset.vendorId
+    });
+
+    // If user is not already a renter for this vendor, create renter profile automatically
+    if (!existingRenter && asset.vendorId) {
+      try {
+        const newRenter = new Renter({
+          firstName: user.firstName || 'N/A',
+          lastName: user.lastName || 'N/A',
+          email: user.email,
+          phone: user.phone || 'N/A',
+          address: user.address || '',
+          vendorId: asset.vendorId,
+          status: 'active',
+          verified: false,
+          notes: `Auto-created from subscription to ${asset.name || asset.model || asset.title}`
+        });
+        
+        await newRenter.save();
+        console.log(`Auto-created renter profile for ${user.email} with vendor ${asset.vendorId}`);
+        
+        // Emit real-time update for new renter
+        try {
+          const io = req.app.get('io');
+          if (io && asset.vendorId) {
+            io.to(`vendor_${asset.vendorId}`).emit('renter_created', {
+              type: 'renter_created',
+              data: {
+                renter: newRenter,
+                source: 'subscription'
+              },
+              timestamp: new Date()
+            });
+            console.log(`Real-time renter creation update sent for vendor ${asset.vendorId}`);
+          }
+        } catch (realtimeError) {
+          console.error('Failed to send renter creation update:', realtimeError);
+        }
+      } catch (renterError) {
+        console.error('Failed to create renter profile:', renterError);
+        // Continue execution even if renter creation fails
+      }
+    }
     
     // Create notification for vendor/agent
     if (asset.vendorId) {
@@ -124,6 +165,61 @@ router.post('/', [
         });
         await notification.save();
       }
+    }
+
+    // *** REAL-TIME DASHBOARD UPDATE ***
+    // Broadcast subscription creation to admin dashboard for real-time updates
+    try {
+      const io = req.app.get('io'); // Socket.io instance
+      if (io && asset.vendorId) {
+        // Calculate updated statistics
+        const totalSubscriptions = await Subscription.countDocuments({ vendorId: asset.vendorId });
+        const activeSubscriptions = await Subscription.countDocuments({ 
+          vendorId: asset.vendorId, 
+          status: 'active' 
+        });
+        const newSubscriptionsThisMonth = await Subscription.countDocuments({
+          vendorId: asset.vendorId,
+          createdAt: { 
+            $gte: new Date(new Date().getFullYear(), new Date().getMonth(), 1) 
+          }
+        });
+
+        // Emit real-time update to admin dashboard
+        io.to(`vendor_${asset.vendorId}`).emit('dashboard_update', {
+          type: 'subscription_created',
+          data: {
+            subscription: {
+              _id: subscription._id,
+              userId: req.userId,
+              assetId,
+              assetType,
+              status: 'active',
+              subscribedAt: subscription.subscribedAt,
+              user: {
+                firstName: user.firstName,
+                lastName: user.lastName,
+                email: user.email
+              },
+              asset: {
+                name: asset.name || asset.model || asset.title,
+                type: assetType
+              }
+            },
+            stats: {
+              totalSubscriptions,
+              activeSubscriptions,
+              newSubscriptions: newSubscriptionsThisMonth
+            }
+          },
+          timestamp: new Date()
+        });
+
+        console.log(`Real-time dashboard update sent for vendor ${asset.vendorId}`);
+      }
+    } catch (realtimeError) {
+      console.error('Failed to send real-time update:', realtimeError);
+      // Continue execution even if real-time update fails
     }
 
     // Populate the subscription for response

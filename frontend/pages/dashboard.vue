@@ -267,7 +267,7 @@
 </template>
 
 <script setup>
-import { ref, reactive, onMounted } from 'vue'
+import { ref, reactive, onMounted, onUnmounted } from 'vue'
 import { useAuthStore } from '~/stores/auth'
 
 // Admin layout ашиглах
@@ -277,14 +277,24 @@ definePageMeta({
 
 const authStore = useAuthStore()
 const user = computed(() => authStore.user)
+const { $socket } = useNuxtApp()
 
-// Mock data - replace with actual API calls
+// Real-time dashboard statistics
 const stats = reactive({
   totalAssets: 24,
   availableAssets: 18,
   rentedAssets: 6,
-  totalSubscriptions: 0
+  totalSubscriptions: 0,
+  totalRenters: 0,
+  activeRenters: 0,
+  totalRentals: 0,
+  activeRentals: 0
 })
+
+// Real-time subscription updates
+const recentSubscriptions = ref([])
+const showSubscriptionAlert = ref(false)
+const newSubscriptionData = ref(null)
 
 const notifications = ref([])
 const unreadNotifications = computed(() => 
@@ -480,6 +490,66 @@ const getNotificationIcon = (type) => {
   }
 }
 
+// Real-time dashboard functions
+const fetchDashboardStats = async () => {
+  try {
+    // Fetch actual statistics from API
+    const response = await fetch('http://localhost:3001/api/vendors/stats', {
+      headers: {
+        'Authorization': `Bearer ${authStore.token}`
+      }
+    })
+    
+    if (response.ok) {
+      const data = await response.json()
+      Object.assign(stats, data.data)
+    }
+  } catch (error) {
+    console.error('Error fetching dashboard stats:', error)
+  }
+}
+
+const handleDashboardUpdate = (updateData) => {
+  console.log('📊 Real-time dashboard update received:', updateData)
+  
+  if (updateData.type === 'subscription_created') {
+    // Update statistics
+    if (updateData.data.stats) {
+      Object.assign(stats, updateData.data.stats)
+    }
+    
+    // Add to recent subscriptions
+    if (updateData.data.subscription) {
+      recentSubscriptions.value.unshift(updateData.data.subscription)
+      
+      // Keep only last 10 subscriptions
+      if (recentSubscriptions.value.length > 10) {
+        recentSubscriptions.value = recentSubscriptions.value.slice(0, 10)
+      }
+      
+      // Show notification alert
+      newSubscriptionData.value = updateData.data.subscription
+      showSubscriptionAlert.value = true
+      
+      // Add to notifications
+      notifications.value.unshift({
+        _id: Date.now().toString(),
+        type: 'subscription_created',
+        title: 'New Subscription',
+        message: `${updateData.data.subscription.user.firstName} ${updateData.data.subscription.user.lastName} subscribed to ${updateData.data.subscription.asset.name}`,
+        isRead: false,
+        createdAt: new Date(),
+        metadata: updateData.data.subscription
+      })
+      
+      // Keep only last 20 notifications
+      if (notifications.value.length > 20) {
+        notifications.value = notifications.value.slice(0, 20)
+      }
+    }
+  }
+}
+
 onMounted(async () => {
   // Load dashboard data
   await authStore.checkAuth()
@@ -500,6 +570,32 @@ onMounted(async () => {
     await fetchNotifications()
     await fetchSubscriptionStats()
     await fetchRealRentals()
+    await fetchDashboardStats()
+    
+    // Setup real-time connection
+    if ($socket && authStore.user?.vendorId) {
+      console.log('🔌 Setting up real-time connection for vendor:', authStore.user.vendorId)
+      $socket.connect()
+      $socket.joinVendorRoom(authStore.user.vendorId)
+      $socket.onDashboardUpdate(handleDashboardUpdate)
+      
+      console.log('✅ Real-time dashboard connected for vendor:', authStore.user.vendorId)
+    } else {
+      console.warn('⚠️ Cannot setup real-time connection:', {
+        hasSocket: !!$socket,
+        vendorId: authStore.user?.vendorId,
+        user: authStore.user
+      })
+    }
+  }
+})
+
+onUnmounted(() => {
+  // Cleanup real-time connection
+  if ($socket && authStore.user?.vendorId) {
+    $socket.offDashboardUpdate(handleDashboardUpdate)
+    $socket.leaveVendorRoom(authStore.user.vendorId)
+    console.log('🔌 Dashboard real-time connection cleaned up')
   }
 })
 </script>

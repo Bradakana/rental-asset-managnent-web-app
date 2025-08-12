@@ -272,15 +272,6 @@
               label="Notes"
               rows="3"
             />
-            
-            <v-text-field v-model="newRental.imageUrl" label="Зурагны линк" />
-            
-            <v-file-input
-              v-model="newRental.contract"
-              label="Upload Contract (PDF)"
-              accept=".pdf"
-              prepend-icon="mdi-file-pdf-box"
-            />
           </v-form>
         </v-card-text>
         <v-card-actions>
@@ -339,9 +330,7 @@ const newRental = reactive({
   endDate: '',
   dailyRate: '',
   deposit: '',
-  notes: '',
-  contract: null,
-  imageUrl: ''
+  notes: ''
 })
 
 // Validation rules
@@ -433,10 +422,7 @@ const saveRental = async () => {
   try {
     await $fetch(`${useRuntimeConfig().public.apiBase}/api/rentals`, {
       method: 'POST',
-      body: {
-        ...newRental,
-        imageUrl: newRental.imageUrl
-      }
+      body: newRental
     })
     // Амжилттай бол form-оо хаах, шинэчлэх гэх мэт
   } catch (error) {
@@ -461,9 +447,7 @@ const resetForm = () => {
     endDate: '',
     dailyRate: '',
     deposit: '',
-    notes: '',
-    contract: null,
-    imageUrl: ''
+    notes: ''
   })
 }
 

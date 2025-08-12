@@ -1,16 +1,9 @@
 const express = require('express');
 const { body, validationResult } = require('express-validator');
 const Estate = require('../models/Estate');
+const { extractVendor } = require('../middleware/auth');
 
 const router = express.Router();
-
-// Middleware to extract vendorId from token (simplified for now)
-const extractVendor = (req, res, next) => {
-  // TODO: Implement proper JWT verification
-  // For now, we'll use a default vendorId or get it from headers
-  req.vendorId = req.headers['vendor-id'] || 'default-vendor';
-  next();
-};
 
 // GET /api/estates - Get all estates (public)
 router.get('/', async (req, res) => {
