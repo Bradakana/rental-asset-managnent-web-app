@@ -250,7 +250,7 @@ router.get('/my-subscriptions', verifyToken, async (req, res) => {
     .sort({ createdAt: -1 })
     .limit(limit * 1)
     .skip((page - 1) * limit)
-    .populate('userId', 'firstName lastName email');
+    .populate('userId', 'username firstName lastName email');
 
     // Populate asset details
     const subscriptionsWithAssets = await Promise.all(
@@ -320,7 +320,7 @@ router.get('/vendor-subscriptions', verifyToken, async (req, res) => {
       .sort({ createdAt: -1 })
       .limit(limit * 1)
       .skip((page - 1) * limit)
-      .populate('userId', 'firstName lastName email phone');
+      .populate('userId', 'username firstName lastName email phone');
 
     // Get asset details for each subscription
     const subscriptionsWithAssets = await Promise.all(

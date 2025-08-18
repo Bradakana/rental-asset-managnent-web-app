@@ -366,17 +366,74 @@ const stats = reactive({
 
 const rentals = ref([])
 
-const availableAssets = ref([
-  { id: 1, name: 'Toyota Camry 2023', type: 'car' },
-  { id: 2, name: 'Downtown Apartment', type: 'real-estate' },
-  { id: 3, name: 'Honda Civic 2022', type: 'car' }
-])
+const availableAssets = ref([])
 
-const renters = ref([
-  { id: 1, name: 'John Doe', email: 'john@example.com' },
-  { id: 2, name: 'Jane Smith', email: 'jane@example.com' },
-  { id: 3, name: 'Mike Johnson', email: 'mike@example.com' }
-])
+const renters = ref([])
+
+const fetchAssets = async () => {
+  try {
+    // Fetch generic assets, cars, and estates concurrently
+    const [assetsRes, carsRes, estatesRes] = await Promise.all([
+      fetch('http://localhost:3001/api/assets'),
+      fetch('http://localhost:3001/api/cars'),
+      fetch('http://localhost:3001/api/estates')
+    ])
+
+    const [assetsJson, carsJson, estatesJson] = await Promise.all([
+      assetsRes.ok ? assetsRes.json() : Promise.resolve({ success: false, assets: [] }),
+      carsRes.ok ? carsRes.json() : Promise.resolve({ success: false, cars: [] }),
+      estatesRes.ok ? estatesRes.json() : Promise.resolve({ success: false, estates: [] })
+    ])
+
+    const genericAssets = (assetsJson.assets || []).map(a => ({
+      id: a._id,
+      name: a.name || a.title || a.model || 'Asset',
+      type: a.type === 'real-estate' ? 'estate' : (a.type || 'asset'),
+      location: a.location,
+      price: a.value
+    }))
+
+    const carAssets = (carsJson.cars || []).map(c => ({
+      id: c._id,
+      name: `${c.brand} ${c.model}`,
+      type: 'car',
+      location: c.location,
+      price: c.price
+    }))
+
+    const estateAssets = (estatesJson.estates || []).map(e => ({
+      id: e._id,
+      name: e.title,
+      type: 'estate',
+      location: e.location,
+      price: e.price
+    }))
+
+    availableAssets.value = [...carAssets, ...estateAssets, ...genericAssets]
+  } catch (error) {
+    console.error('Error fetching assets:', error)
+  }
+}
+
+const fetchRenters = async () => {
+  try {
+    await authStore.checkAuth()
+    const response = await fetch('http://localhost:3001/api/renters', {
+      headers: { 'Authorization': `Bearer ${authStore.token}` }
+    })
+    if (!response.ok) return
+    const data = await response.json()
+    if (data.success && Array.isArray(data.data)) {
+      renters.value = data.data.map(r => ({
+        id: r._id,
+        name: `${r.firstName || ''} ${r.lastName || ''}`.trim() || r.email,
+        email: r.email
+      }))
+    }
+  } catch (error) {
+    console.error('Error fetching renters:', error)
+  }
+}
 
 // Computed properties
 const filteredRentals = computed(() => {
@@ -403,15 +460,7 @@ const filteredRentals = computed(() => {
 
 // Methods
 const loadRentals = async () => {
-  loading.value = true
-  try {
-    // TODO: Replace with actual API call
-    await new Promise(resolve => setTimeout(resolve, 1000))
-  } catch (error) {
-    console.error('Error loading rentals:', error)
-  } finally {
-    loading.value = false
-  }
+  await fetchRentals()
 }
 
 const saveRental = async () => {
@@ -420,13 +469,41 @@ const saveRental = async () => {
 
   saving.value = true
   try {
-    await $fetch(`${useRuntimeConfig().public.apiBase}/api/rentals`, {
+    await authStore.checkAuth()
+    const token = authStore.token
+    const totalAmount = calculateTotal(newRental.startDate, newRental.endDate, Number(newRental.dailyRate))
+
+    const payload = {
+      assetId: newRental.assetId,
+      renterId: newRental.renterId,
+      startDate: newRental.startDate,
+      endDate: newRental.endDate,
+      dailyRate: Number(newRental.dailyRate),
+      totalAmount: Number(totalAmount),
+      deposit: newRental.deposit ? Number(newRental.deposit) : 0,
+      notes: newRental.notes || ''
+    }
+
+    const response = await fetch('http://localhost:3001/api/rentals', {
       method: 'POST',
-      body: newRental
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`
+      },
+      body: JSON.stringify(payload)
     })
-    // Амжилттай бол form-оо хаах, шинэчлэх гэх мэт
+
+    const data = await response.json()
+    if (!response.ok || !data.success) {
+      throw new Error(data.error || 'Failed to create rental')
+    }
+
+    showAddDialog.value = false
+    resetForm()
+    await fetchRentals()
   } catch (error) {
     console.error('Error saving rental:', error)
+    alert(error.message || 'Failed to save rental')
   } finally {
     saving.value = false
   }
@@ -485,17 +562,26 @@ const editRental = (id) => {
 }
 
 const completeRental = async (id) => {
-  if (confirm('Mark this rental as completed?')) {
-    try {
-      // TODO: Replace with actual API call
-      await new Promise(resolve => setTimeout(resolve, 500))
-      const rental = rentals.value.find(r => r.id === id)
-      if (rental) {
-        rental.status = 'completed'
-      }
-    } catch (error) {
-      console.error('Error completing rental:', error)
+  if (!confirm('Mark this rental as completed?')) return
+  try {
+    await authStore.checkAuth()
+    const response = await fetch(`http://localhost:3001/api/rentals/${id}/return`, {
+      method: 'PATCH',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${authStore.token}`
+      },
+      body: JSON.stringify({})
+    })
+    const data = await response.json()
+    if (response.ok && data.success) {
+      await fetchRentals()
+    } else {
+      alert(data.error || 'Failed to complete rental')
     }
+  } catch (error) {
+    console.error('Error completing rental:', error)
+    alert('Failed to complete rental')
   }
 }
 
@@ -556,6 +642,7 @@ onMounted(async () => {
     return
   }
 
+  await Promise.all([fetchAssets(), fetchRenters()])
   await fetchRentals()
 })
 </script>

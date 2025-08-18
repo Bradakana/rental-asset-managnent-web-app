@@ -240,10 +240,16 @@ const saveCar = async () => {
     
     console.log('Sending car data:', carData) // Debug log
     
+    // Ensure authenticated so backend can extract vendorId from token
+    const { useAuthStore } = await import('~/stores/auth')
+    const authStore = useAuthStore()
+    await authStore.checkAuth()
+
     const response = await fetch(url, {
       method,
       headers: {
         'Content-Type': 'application/json',
+        'Authorization': `Bearer ${authStore.token}`
       },
       body: JSON.stringify(carData)
     })
@@ -278,8 +284,15 @@ const deleteCar = async (carId) => {
   
   loading.value = true
   try {
+    const { useAuthStore } = await import('~/stores/auth')
+    const authStore = useAuthStore()
+    await authStore.checkAuth()
+
     const response = await fetch(`http://localhost:3001/api/cars/${carId}`, {
-      method: 'DELETE'
+      method: 'DELETE',
+      headers: {
+        'Authorization': `Bearer ${authStore.token}`
+      }
     })
     
     const data = await response.json()

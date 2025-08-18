@@ -251,11 +251,15 @@ const saveEstate = async () => {
       : 'http://localhost:3001/api/estates'
     
     const method = editingEstate.value ? 'PUT' : 'POST'
-    
+    const { useAuthStore } = await import('~/stores/auth')
+    const authStore = useAuthStore()
+    await authStore.checkAuth()
+
     const response = await fetch(url, {
       method,
       headers: {
         'Content-Type': 'application/json',
+        'Authorization': `Bearer ${authStore.token}`
       },
       body: JSON.stringify(estateForm)
     })
@@ -286,8 +290,15 @@ const deleteEstate = async (estateId) => {
   
   loading.value = true
   try {
+    const { useAuthStore } = await import('~/stores/auth')
+    const authStore = useAuthStore()
+    await authStore.checkAuth()
+
     const response = await fetch(`http://localhost:3001/api/estates/${estateId}`, {
-      method: 'DELETE'
+      method: 'DELETE',
+      headers: {
+        'Authorization': `Bearer ${authStore.token}`
+      }
     })
     
     const data = await response.json()

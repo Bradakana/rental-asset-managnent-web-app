@@ -9,9 +9,9 @@ const Renter = require('../models/Renter');
 
 // Connect to MongoDB
 mongoose.connect(process.env.MONGODB_URI || 'mongodb://localhost:27017/rental-management')
-  .then(() => console.log('✅ Connected to MongoDB'))
+  .then(() => console.log('Connected to MongoDB'))
   .catch(err => {
-    console.error('❌ MongoDB connection error:', err);
+    console.error('MongoDB connection error:', err);
     process.exit(1);
   });
 
@@ -29,9 +29,9 @@ async function clearAndSetupTestData() {
       Renter.deleteMany({})
     ]);
     
-    console.log('✅ Database cleared');
+    console.log('Database cleared');
 
-    console.log('🚀 Creating fresh test data...');
+    console.log('Creating fresh test data...');
 
     // Create test vendor 1 (Car Rentals)
     const testUser1 = new User({
@@ -90,7 +90,7 @@ async function clearAndSetupTestData() {
         seats: 5,
         location: 'Ulaanbaatar, Mongolia',
         price: 50000,
-        image: 'https://example.com/toyota-camry.jpg',
+        image: 'https://vehicle-images.dealerinspire.com/b163-110004142/thumbnails/large/4T1DAACK9SU190549/c028a15844cff668936ff2b555c091d0.png',
         description: 'Comfortable and reliable sedan perfect for business trips',
         vendorId: testVendor1._id.toString()
       },
@@ -103,7 +103,7 @@ async function clearAndSetupTestData() {
         seats: 5,
         location: 'Ulaanbaatar, Mongolia',
         price: 45000,
-        image: 'https://example.com/honda-civic.jpg',
+        image: 'https://automobiles.honda.com/-/media/Honda-Automobiles/Vehicles/2026/civic-sedan/non-VLP/10-Family/MY26_Civic_Family_Card_Jelly_2x.png?sc_lang=en',
         description: 'Fuel-efficient compact car ideal for city driving',
         vendorId: testVendor1._id.toString()
       }
@@ -128,7 +128,7 @@ async function clearAndSetupTestData() {
         furnished: true,
         petsAllowed: false,
         price: 1200,
-        image: 'https://example.com/apartment1.jpg',
+        image: 'https://photos.zillowstatic.com/fp/803c54e970b0ecd171338e3895091331-p_e.jpg',
         description: 'Beautiful modern apartment in the heart of the city with stunning views',
         propertyType: 'Apartment',
         vendorId: testVendor2._id.toString()
@@ -144,7 +144,7 @@ async function clearAndSetupTestData() {
         furnished: true,
         petsAllowed: true,
         price: 800,
-        image: 'https://example.com/studio1.jpg',
+        image: 'https://rent.brookfieldproperties.com/wp-content/uploads/2024/05/Atelier-PH7-08_Web.jpg',
         description: 'Perfect studio for professionals, fully furnished and pet-friendly',
         propertyType: 'Studio',
         vendorId: testVendor2._id.toString()

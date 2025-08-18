@@ -1,17 +1,20 @@
 const express = require('express');
 const { body, validationResult } = require('express-validator');
 const Renter = require('../models/Renter');
+const { verifyToken } = require('../middleware/auth');
 // const upload = require('../middleware/upload');
 
 const router = express.Router();
+
+// Protect all renter routes and extract user/vendor from JWT
+router.use(verifyToken);
 
 // Get all renters for vendor
 router.get('/', async (req, res) => {
   try {
     const { status, search, page = 1, limit = 10 } = req.query;
     
-    // const query = { vendorId: req.vendorId };
-    const query = {};
+    const query = { vendorId: req.vendorId };
     
     if (status) query.status = status;
     if (search) {

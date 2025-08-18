@@ -355,64 +355,15 @@ const phoneRules = [
   v => !!v || 'Phone number is required'
 ]
 
-// Mock data
+// Real data
 const stats = reactive({
-  totalRenters: 28,
-  activeRenters: 22,
-  expiringDocs: 5,
-  avgRating: 4.2
+  totalRenters: 0,
+  activeRenters: 0,
+  expiringDocs: 0,
+  avgRating: 0
 })
 
-const renters = ref([
-  {
-    id: 1,
-    name: 'John Doe',
-    email: 'john@example.com',
-    phone: '+1 (555) 123-4567',
-    status: 'active',
-    verified: true,
-    avatar: null,
-    totalRentals: 8,
-    totalSpent: 2400,
-    rating: 4.5
-  },
-  {
-    id: 2,
-    name: 'Jane Smith',
-    email: 'jane@example.com',
-    phone: '+1 (555) 987-6543',
-    status: 'active',
-    verified: true,
-    avatar: null,
-    totalRentals: 12,
-    totalSpent: 3800,
-    rating: 4.8
-  },
-  {
-    id: 3,
-    name: 'Mike Johnson',
-    email: 'mike@example.com',
-    phone: '+1 (555) 456-7890',
-    status: 'inactive',
-    verified: false,
-    avatar: null,
-    totalRentals: 3,
-    totalSpent: 900,
-    rating: 3.9
-  },
-  {
-    id: 4,
-    name: 'Sarah Wilson',
-    email: 'sarah@example.com',
-    phone: '+1 (555) 321-0987',
-    status: 'active',
-    verified: true,
-    avatar: null,
-    totalRentals: 15,
-    totalSpent: 5200,
-    rating: 4.7
-  }
-])
+const renters = ref([])
 
 // Computed properties
 const filteredRenters = computed(() => {
@@ -453,8 +404,33 @@ const filteredRenters = computed(() => {
 const loadRenters = async () => {
   loading.value = true
   try {
-    // TODO: Replace with actual API call
-    await new Promise(resolve => setTimeout(resolve, 1000))
+    const { useAuthStore } = await import('~/stores/auth')
+    const authStore = useAuthStore()
+    await authStore.checkAuth()
+    if (!authStore.token) return
+
+    const params = new URLSearchParams()
+    if (selectedStatus.value) params.append('status', selectedStatus.value)
+    if (search.value) params.append('search', search.value)
+
+    const response = await fetch(`http://localhost:3001/api/renters?${params}`, {
+      headers: { 'Authorization': `Bearer ${authStore.token}` }
+    })
+    if (response.ok) {
+      const data = await response.json()
+      renters.value = (data.data || []).map(r => ({
+        id: r._id,
+        name: `${r.firstName || ''} ${r.lastName || ''}`.trim() || r.email,
+        email: r.email,
+        phone: r.phone,
+        status: r.status || 'active',
+        verified: !!r.verified,
+        avatar: null,
+        totalRentals: r.totalRentals || 0,
+        totalSpent: r.totalSpent || 0,
+        rating: r.rating || 0
+      }))
+    }
   } catch (error) {
     console.error('Error loading renters:', error)
   } finally {
@@ -468,13 +444,27 @@ const saveRenter = async () => {
 
   saving.value = true
   try {
-    await $fetch(`${useRuntimeConfig().public.apiBase}/api/renters`, {
+    const { useAuthStore } = await import('~/stores/auth')
+    const authStore = useAuthStore()
+    await authStore.checkAuth()
+    const response = await fetch('http://localhost:3001/api/renters', {
       method: 'POST',
-      body: newRenter
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${authStore.token}`
+      },
+      body: JSON.stringify(newRenter)
     })
-    // Амжилттай бол form-оо хаах, шинэчлэх гэх мэт
+    if (!response.ok) {
+      const err = await response.json().catch(() => ({}))
+      throw new Error(err.error || 'Failed to save renter')
+    }
+    showAddDialog.value = false
+    resetForm()
+    await loadRenters()
   } catch (error) {
     console.error('Error saving renter:', error)
+    alert(error.message || 'Failed to save renter')
   } finally {
     saving.value = false
   }
@@ -529,14 +519,23 @@ const viewRentalHistory = (id) => {
 }
 
 const deleteRenter = async (id) => {
-  if (confirm('Are you sure you want to delete this renter?')) {
-    try {
-      // TODO: Replace with actual API call
-      await new Promise(resolve => setTimeout(resolve, 500))
-      renters.value = renters.value.filter(renter => renter.id !== id)
-    } catch (error) {
-      console.error('Error deleting renter:', error)
+  if (!confirm('Are you sure you want to delete this renter?')) return
+  try {
+    const { useAuthStore } = await import('~/stores/auth')
+    const authStore = useAuthStore()
+    await authStore.checkAuth()
+    const response = await fetch(`http://localhost:3001/api/renters/${id}`, {
+      method: 'DELETE',
+      headers: { 'Authorization': `Bearer ${authStore.token}` }
+    })
+    if (!response.ok) {
+      const err = await response.json().catch(() => ({}))
+      throw new Error(err.error || 'Failed to delete renter')
     }
+    await loadRenters()
+  } catch (error) {
+    console.error('Error deleting renter:', error)
+    alert(error.message || 'Failed to delete renter')
   }
 }
 

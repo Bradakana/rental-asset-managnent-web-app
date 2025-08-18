@@ -3,9 +3,65 @@ const { body, validationResult } = require('express-validator');
 const Rental = require('../models/Rental');
 const Asset = require('../models/Asset');
 const Renter = require('../models/Renter');
+const Car = require('../models/Car');
+const Estate = require('../models/Estate');
+const { verifyToken } = require('../middleware/auth');
 // const upload = require('../middleware/upload');
 
 const router = express.Router();
+
+// Ensure we have userId and vendorId from JWT for all rental routes
+router.use(verifyToken);
+
+// Helper: find asset in any collection and normalize minimal fields
+async function findAssetAnyById(assetId) {
+  // Try generic Asset first
+  let doc = await Asset.findById(assetId).lean();
+  if (doc) {
+    return {
+      type: doc.type === 'real-estate' ? 'estate' : (doc.type || 'asset'),
+      vendorId: doc.vendorId,
+      name: doc.name,
+      location: doc.location,
+      price: doc.value, // generic assets may not have price
+      availabilityFlag: null, // not tracked on Asset
+      collection: 'Asset',
+      _id: doc._id,
+    };
+  }
+
+  // Try Car
+  doc = await Car.findById(assetId).lean();
+  if (doc) {
+    return {
+      type: 'car',
+      vendorId: doc.vendorId,
+      name: `${doc.brand} ${doc.model}`,
+      location: doc.location,
+      price: doc.price,
+      availabilityFlag: doc.isAvailable,
+      collection: 'Car',
+      _id: doc._id,
+    };
+  }
+
+  // Try Estate
+  doc = await Estate.findById(assetId).lean();
+  if (doc) {
+    return {
+      type: 'estate',
+      vendorId: doc.vendorId,
+      name: doc.title,
+      location: doc.location,
+      price: doc.price,
+      availabilityFlag: doc.isAvailable,
+      collection: 'Estate',
+      _id: doc._id,
+    };
+  }
+
+  return null;
+}
 
 // Get all rentals for vendor
 router.get('/', async (req, res) => {
@@ -20,12 +76,26 @@ router.get('/', async (req, res) => {
 
     const skip = (page - 1) * limit;
     
-    const rentals = await Rental.find(query)
-      .populate('assetId', 'name type')
+    const rentalsRaw = await Rental.find(query)
       .populate('renterId', 'firstName lastName email phone')
       .sort({ createdAt: -1 })
       .skip(skip)
       .limit(parseInt(limit));
+
+    // Attach asset details from any collection
+    const rentals = await Promise.all(rentalsRaw.map(async (r) => {
+      const asset = await findAssetAnyById(r.assetId);
+      return {
+        ...r.toObject(),
+        asset: asset ? {
+          id: asset._id,
+          name: asset.name,
+          type: asset.type,
+          location: asset.location,
+          price: asset.price,
+        } : null,
+      };
+    }));
     
     const total = await Rental.countDocuments(query);
 
@@ -99,23 +169,18 @@ router.post('/', [
     const { assetId, renterId, startDate, endDate, dailyRate, totalAmount, deposit, notes } = req.body;
 
     // Check if asset exists and is available
-    const asset = await Asset.findOne({ 
-      _id: assetId, 
-      vendorId: req.vendorId 
-    });
+    const asset = await findAssetAnyById(assetId);
 
-    if (!asset) {
+    if (!asset || asset.vendorId !== req.vendorId) {
       return res.status(404).json({ 
         success: false, 
         error: 'Asset not found' 
       });
     }
 
-    if (asset.status !== 'available') {
-      return res.status(400).json({ 
-        success: false, 
-        error: 'Asset is not available for rental' 
-      });
+    // Availability check for Car/Estate (generic Asset has no flag)
+    if (asset.collection !== 'Asset' && asset.availabilityFlag === false) {
+      return res.status(400).json({ success: false, error: 'Asset is not available for rental' });
     }
 
     // Check if renter exists
@@ -165,19 +230,31 @@ router.post('/', [
     const rental = new Rental(rentalData);
     await rental.save();
 
-    // Update asset status
-    asset.status = 'rented';
-    asset.lastRental = new Date();
-    await asset.save();
+    // Update asset availability for Car/Estate
+    if (asset.collection === 'Car') {
+      await Car.findByIdAndUpdate(asset._id, { isAvailable: false });
+    } else if (asset.collection === 'Estate') {
+      await Estate.findByIdAndUpdate(asset._id, { isAvailable: false });
+    }
 
     // Update renter stats
     renter.totalRentals += 1;
     renter.totalSpent += parseFloat(totalAmount);
     await renter.save();
 
-    const populatedRental = await Rental.findById(rental._id)
-      .populate('assetId', 'name type')
+    const populatedRentalBase = await Rental.findById(rental._id)
       .populate('renterId', 'firstName lastName email phone');
+    const assetDetails = await findAssetAnyById(populatedRentalBase.assetId);
+    const populatedRental = {
+      ...populatedRentalBase.toObject(),
+      asset: assetDetails ? {
+        id: assetDetails._id,
+        name: assetDetails.name,
+        type: assetDetails.type,
+        location: assetDetails.location,
+        price: assetDetails.price,
+      } : null,
+    };
 
     res.status(201).json({
       success: true,
@@ -278,15 +355,28 @@ router.patch('/:id/return', [
     await rental.save();
 
     // Update asset status
-    const asset = await Asset.findById(rental.assetId);
+    const asset = await findAssetAnyById(rental.assetId);
     if (asset) {
-      asset.status = 'available';
-      await asset.save();
+      if (asset.collection === 'Car') {
+        await Car.findByIdAndUpdate(asset._id, { isAvailable: true });
+      } else if (asset.collection === 'Estate') {
+        await Estate.findByIdAndUpdate(asset._id, { isAvailable: true });
+      }
     }
 
-    const populatedRental = await Rental.findById(rental._id)
-      .populate('assetId', 'name type')
+    const populatedRentalBase = await Rental.findById(rental._id)
       .populate('renterId', 'firstName lastName email phone');
+    const assetDetails = await findAssetAnyById(populatedRentalBase.assetId);
+    const populatedRental = {
+      ...populatedRentalBase.toObject(),
+      asset: assetDetails ? {
+        id: assetDetails._id,
+        name: assetDetails.name,
+        type: assetDetails.type,
+        location: assetDetails.location,
+        price: assetDetails.price,
+      } : null,
+    };
 
     res.json({
       success: true,
